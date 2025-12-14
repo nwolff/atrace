@@ -1,0 +1,17 @@
+[project]
+name = "atrace"
+version = "0.1.2"
+description = "Generate trace tables for programs"
+readme = "README.md"
+authors = [{ name = "Nicholas Wolff", email = "nwolff@gmail.com" }]
+requires-python = ">=3.10"
+dependencies = [
+    "tabulate>=0.9.0",
+]
+
+[project.urls]
+Repository = "https://github.com/nwolff/atrace.git"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
