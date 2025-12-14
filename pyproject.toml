@@ -1,0 +1,12 @@
+[project]
+name = "atrace"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+authors = [{ name = "Nicholas Wolff", email = "nwolff@gmail.com" }]
+requires-python = ">=3.7"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
