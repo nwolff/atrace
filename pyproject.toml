@@ -1,0 +1,30 @@
+[project]
+name = "atrace"
+version = "0.6.0"
+description = "Generate trace tables for simple programs"
+license = "MIT"
+license-files = ["LICENSE"]
+readme = "README.md"
+authors = [{ name = "Nicholas Wolff", email = "nwolff@gmail.com" }]
+requires-python = ">=3.10"
+dependencies = ["tabulate>=0.9.0"]
+
+[project.urls]
+Repository = "https://github.com/nwolff/atrace.git"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "babel>=2.18.0",
+    "coverage>=7.13.4",
+    "mypy>=1.19.1",
+    "ruff>=0.14.14",
+    "types-mock>=5.2.0.20250924",
+    "types-tabulate>=0.9.0.20241207",
+]
+
+[tool.coverage.run]
+core = "sysmon"
