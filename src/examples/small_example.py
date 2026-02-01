@@ -2,11 +2,12 @@ import atrace  # noqa
 
 x, y = 1, 3
 
-while y > 0:
-    x = x + 1
-    y = y - 1
+print("haaaa")
 
-print("somme: ", x)
+while x < y:
+    x = x + 1
+
+print("x:", x)
 
 
 def f(a, b):

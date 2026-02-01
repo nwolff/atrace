@@ -1,6 +1,6 @@
 [project]
 name = "atrace"
-version = "0.1.4"
+version = "0.1.5"
 description = "Generate trace tables for programs"
 readme = "README.md"
 authors = [{ name = "Nicholas Wolff", email = "nwolff@gmail.com" }]
@@ -18,6 +18,4 @@ build-backend = "hatchling.build"
 dev = ["mypy>=1.19.1", "ruff>=0.14.14"]
 
 [tool.uv.workspace]
-members = [
-    "src/examples",
-]
+members = ["src/examples"]
