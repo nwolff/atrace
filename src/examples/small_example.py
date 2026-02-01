@@ -2,17 +2,17 @@ import atrace  # noqa
 
 x, y = 1, 3
 
-print("haaaa")
-
 while x < y:
     x = x + 1
 
 print("x:", x)
 
+t = 1, 2
+
 
 def f(a, b):
     c = a + " " + b
-    print(c, "!")
+    return c + "!"
 
 
-f("Bonjour", "tout le monde")
+print(f("Bonjour", "tout le monde"))

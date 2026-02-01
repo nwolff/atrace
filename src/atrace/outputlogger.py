@@ -6,7 +6,7 @@ from . import model
 
 class OutputLogger:
     """
-    OutputLogger wraps stdout, writing to it and simultaneously capturing the text to the trace.
+    OutputLogger wraps stdout, passing down writes and flushes to it, while simultaneously capturing the text to the trace.
     """
 
     def __init__(self, trace: model.Trace, stdout: TextIO):

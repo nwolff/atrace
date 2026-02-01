@@ -1,6 +1,6 @@
 [project]
 name = "atrace"
-version = "0.1.5"
+version = "0.1.6"
 description = "Generate trace tables for programs"
 readme = "README.md"
 authors = [{ name = "Nicholas Wolff", email = "nwolff@gmail.com" }]
@@ -15,7 +15,12 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [dependency-groups]
-dev = ["mypy>=1.19.1", "ruff>=0.14.14"]
+dev = [
+ "mypy>=1.19.1",
+ "pytest>=9.0.2",
+ "ruff>=0.14.14",
+ "types-tabulate>=0.9.0.20241207",
+]
 
 [tool.uv.workspace]
 members = ["src/examples"]

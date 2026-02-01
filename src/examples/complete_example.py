@@ -7,6 +7,8 @@ while x < y:
 
 print("x", x)
 
+t = (1, 2)
+
 kids = ["riri", "fifi", "loulou"]
 while kids:
     print(kids.pop(0))
@@ -20,8 +22,6 @@ def double(a):
     b = a * 2
     return b
 
-
-ligne = 666  # To test if it messes up the table header ligne
 
 print(double(6))
 

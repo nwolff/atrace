@@ -33,13 +33,21 @@ class VarTracer:
     def __init__(self, trace: model.Trace, module_of_interest: ModuleType):
         self.trace = trace
         self.module_of_interest = module_of_interest
-        self.last_locals = {}
+        self.last_locals: dict[str, Any] = {}
 
     def trace_vars(self, frame: FrameType, event: str, arg: Any):
         if inspect.getmodule(frame) != self.module_of_interest:
             return
         if event == "return":
-            return
+            self.trace.append(
+                model.TraceItem(
+                    line_no=frame.f_lineno,
+                    function_name=frame.f_code.co_name,
+                    event=model.ReturnEvent(
+                        function_name=frame.f_code.co_name, return_value=arg  # XXX
+                    ),
+                )
+            )
 
         code = frame.f_code
 
@@ -57,9 +65,7 @@ class VarTracer:
                         line_no=frame.f_lineno,
                         function_name=frame.f_code.co_name,
                         event=model.VariableChangeEvent(
-                            variable=model.Variable(
-                                function_name=code.co_name, name=var
-                            ),
+                            variable=model.Variable(scope=code.co_name, name=var),
                             value=new_val,
                         ),
                     )

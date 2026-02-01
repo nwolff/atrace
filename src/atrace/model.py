@@ -2,15 +2,21 @@ from dataclasses import dataclass
 from typing import Any, TypeAlias
 
 
-@dataclass
+@dataclass(frozen=True)
 class PrintEvent:
     text: str
 
 
 @dataclass(frozen=True)
 class Variable:
-    function_name: str | None
+    scope: str
     name: str
+
+
+@dataclass(frozen=True)
+class ReturnEvent:
+    function_name: str
+    return_value: Any
 
 
 @dataclass(frozen=True)
@@ -19,11 +25,11 @@ class VariableChangeEvent:
     value: Any
 
 
-@dataclass
+@dataclass(frozen=True)
 class TraceItem:
     line_no: int
     function_name: str
-    event: PrintEvent | VariableChangeEvent
+    event: PrintEvent | VariableChangeEvent | ReturnEvent
 
 
 Trace: TypeAlias = list[TraceItem]
