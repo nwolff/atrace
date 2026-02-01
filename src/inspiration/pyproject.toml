@@ -1,7 +1,0 @@
-[project]
-name = "experiments"
-version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
-requires-python = ">=3.7"
-dependencies = ["execution-trace>=1.2.0", "pytracertool>=2.0.4"]

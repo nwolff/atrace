@@ -1,14 +1,26 @@
 import atexit
 import inspect
+import signal
 import sys
 from types import FrameType
-from typing import Any, Optional
+from typing import Optional
 
-from . import tracers
+from . import model, outputlogger, report, vartracer
+
+trace: model.Trace = []
 
 
-def just_kicking_off(frame: FrameType, event: str, arg: Any):
-    return None
+original_stdout = sys.stdout
+
+
+def exit_handler():
+    sys.stdout = original_stdout
+    report.dump_report(trace)
+
+
+# https://stackoverflow.com/questions/23468042/the-invocation-of-signal-handler-and-atexit-handler-in-python
+def sig_handler(_signo, _frame):
+    sys.exit(0)
 
 
 def get_importer_frame() -> Optional[FrameType]:
@@ -21,35 +33,53 @@ def get_importer_frame() -> Optional[FrameType]:
     return None
 
 
-def exit_handler():
-    sys.stdout = original_stdout
-    print(outputLogger.captured)
-
-
-original_stdout = sys.stdout
-outputLogger = tracers.OutputLogger(sys.stdout)
-
-
 def setup():
-    sys.settrace(just_kicking_off)
-    # This kicks off the tracing machinery (so that the lines below work)
+    """See https://docs.python.org/3/library/sys.html#sys.settrace for an explanation of all the convoluted things in here"""
 
-    # This reaches into the importing module's frame to setup tracing of code outside of functions
+    # We want to only trace the module that imports us
     importer_frame = get_importer_frame()
     if importer_frame:
-        importer_frame.f_trace = tracers.trace_vars
-        tracers.module_of_interest = inspect.getmodule(
-            importer_frame
-        )  # XXX This is dirty
+        module_of_interest = inspect.getmodule(importer_frame)
+        if module_of_interest:
+            var_tracer = vartracer.VarTracer(trace, module_of_interest)
 
-        # This will work next time we enter a function.
-        sys.settrace(tracers.trace_vars)
-    else:
-        print("Cannot trace")
+            # Setup tracing inside of functions.
+            # Order is important. This must be called before seting the trace function for the current frame
+            sys.settrace(var_tracer.trace_vars)
 
-    sys.stdout = outputLogger
+            # Setup tracing outside of functions
+            importer_frame.f_trace = var_tracer.trace_vars
+
+    sys.stdout = outputlogger.OutputLogger(trace=trace, stdout=sys.stdout)
 
     atexit.register(exit_handler)
+    catchable_sigs = set(signal.Signals) - {signal.SIGKILL, signal.SIGSTOP}
+    for sig in catchable_sigs:
+        signal.signal(sig, sig_handler)
 
 
-setup()
+def var_trace_for_code(code: str) -> model.Trace:
+    trace: model.Trace = []
+    # We want to only trace the module that imports us
+    importer_frame = get_importer_frame()
+    if importer_frame:
+        module_of_interest = inspect.getmodule(importer_frame)
+        if module_of_interest:
+            print("module of interest:", module_of_interest)
+            var_tracer = vartracer.VarTracer(trace, module_of_interest)
+            try:
+                sys.settrace(var_tracer.trace_vars)
+
+                def f():
+                    exec(code)
+
+                f()
+            finally:
+                sys.settrace(None)
+        else:
+            print("no module of interest")
+    return trace
+
+
+if "pytest" not in sys.modules:
+    setup()

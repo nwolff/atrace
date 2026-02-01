@@ -25,6 +25,12 @@ jobs:
         uses: astral-sh/setup-uv@v7
       - name: Install Python 3.13
         run: uv python install 3.13
+      - name: Lint
+        run: uv run ruff check src tests
+      - name: Type check
+        run: uv run mypy src tests
+      - name: Run tests
+        run: uv run pytest
       - name: Build
         run: uv build
       - name: Publish

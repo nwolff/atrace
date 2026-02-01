@@ -1,19 +1,21 @@
-import atrace
+import atrace  # noqa
 
-x = 0
-y = 10
+x, y = 3, 6
 
 while x < y:
     x = x + 1
-    y = y - 1
-    print("****")
 
 print("x", x)
-print("y", x)
 
-l = ["fifi", "riri", "loulou"]
-while l:
-    print(l.pop())
+t = (1, 2)
+
+kids = ["riri", "fifi", "loulou"]
+while kids:
+    print(kids.pop(0))
+
+
+for i in range(5):
+    print(i)
 
 
 def double(a):
