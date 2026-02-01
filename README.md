@@ -20,50 +20,44 @@ An idea of how things look:
 +--------+-------------+-------------+----------------------------+-----------+-----------+----------+
 ```
 
-# Requirements/TODO
+Does not work with :
 
-- Think of how to show function activation / scopes / variables that are deleted (that last one is easy, just stop showing it). Some good ideas in pytracetool
+- Multithreaded programs
+- Multi-module programs
 
-- Entering a function, binding the local arguments, returning
-- Should display the trace even if an exception interrupts the program
-- Should display the trace even if the user interrupts the program
-- Use colors in the trace ?
-- Thonny, which adds a shitload of indirection and magic
-- unit tests
-- Make robust. In other words should never raise an exception.
+# TODO
+
+- Build the goddam table
+- Fix line numbers in trace_vars
+- Parallel assignations show up properly
+- Thonny, which adds a lot of indirection and magic
 
 # Later
 
-- Replace sys.\_getframe with public api calls (unless too slow) ?
+- Make robust. In other words should never raise an exception. ruff check, mypy, unit-tests.
+- Handle classes better
+- More details when recursive invocations
+- Think about how to show returns
+- Find if there could be a good use for colors in the trace
 
 # Done
 
-- lets the program print to stdout unhindered, but captures the prints at the same time, to show in the trace at the end
-- Emits the trace at the end if the application ends normally.
+- Sets the program print to stdout unhindered (this is important for input to work properly),
+  but captures the prints at the same time to show in the trace at the end.
+- Emits the trace at the end if the application ends normally and abruptly (exception, signal, etc.)
+- Shows bindings to local variables when entering a function
 - Handles mutations to objects like lists (by copying the previous version and then comparing)
-
-# Not in scope
-
-- Multithreaded programs
-- Multimodule programs
-- classes
 
 # Build
 
 Automatically deployed to pypi every time a new tag is pushed: https://pypi.org/project/atrace/
 
-# Refs
+# Inspiration
 
-- https://docs.python.org/3/library/sys.html#sys.settrace The python doc for settrace
+https://github.com/DarshanLakshman/PyTracerTool/blob/master/PyTracerTool/pytracertool.py
 
-- https://stackoverflow.com/questions/16258553/how-can-i-define-algebraic-data-types-in-python To model the events in the trace
+Does almost everything I want, but has many flaws:
 
-- https://stackoverflow.com/questions/23468042/the-invocation-of-signal-handler-and-atexit-handler-in-python to dump the trace when the program stops, no matter how.
-
-# Technical Refs
-
-- https://github.com/DarshanLakshman/PyTracerTool Does almost everything I want, but has two flaws: it chokes trying to deepcopy some objects, it cannot be simply imported into a module.
-
-- https://github.com/mihneadb/python-execution-trace 11 years old, doesn't work at all
-
-- https://stackoverflow.com/questions/1645028/trace-table-for-python-programs Some ideas in there
+- it chokes trying to deepcopy some objects
+- it cannot be simply imported into a module
+- it fumbles the handling of output (preventing programs with input from working properly).

@@ -1,5 +1,6 @@
-import atrace
+from pytracertool.pytracertool import CodeTracer
 
+example_code = """
 x = 0
 y = 10
 
@@ -24,6 +25,7 @@ def double(a):
 print(double(6))
 
 
+'''
 def recursive_count(x):
     if x == 0:
         return 0
@@ -32,7 +34,11 @@ def recursive_count(x):
 
 
 print(recursive_count(4))
+'''
+"""
 
-answer = input("question ")
-
-raise Exception("an exception")
+# pytracetool chokes trying to deepcopy some objects. To run this code you'll have to patch the installed pytracetool package
+tracer = CodeTracer(example_code, None)
+tracer.generate_trace_table()
+trace_table_str = str(tracer)
+print(trace_table_str)

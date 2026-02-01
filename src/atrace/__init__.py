@@ -1,10 +1,13 @@
 import atexit
 import inspect
+import signal
 import sys
 from types import FrameType
 from typing import Any, Optional
 
-from . import tracers
+from . import model, report, tracers
+
+trace: model.Trace = []
 
 
 def just_kicking_off(frame: FrameType, event: str, arg: Any):
@@ -21,35 +24,45 @@ def get_importer_frame() -> Optional[FrameType]:
     return None
 
 
+original_stdout = sys.stdout
+
+
 def exit_handler():
     sys.stdout = original_stdout
-    print(outputLogger.captured)
+    report.dump_report(trace)
 
 
-original_stdout = sys.stdout
-outputLogger = tracers.OutputLogger(sys.stdout)
+# https://stackoverflow.com/questions/23468042/the-invocation-of-signal-handler-and-atexit-handler-in-python
+def sig_handler(_signo, _frame):
+    sys.exit(0)
 
 
 def setup():
-    sys.settrace(just_kicking_off)
-    # This kicks off the tracing machinery (so that the lines below work)
+    """See https://docs.python.org/3/library/sys.html#sys.settrace for an explanation of all the convoluted things in here"""
 
-    # This reaches into the importing module's frame to setup tracing of code outside of functions
+    # This kicks off the tracing machinery (so that the lines below work)
+    sys.settrace(just_kicking_off)
+
+    # We want to only trace the module that imports us
     importer_frame = get_importer_frame()
     if importer_frame:
-        importer_frame.f_trace = tracers.trace_vars
-        tracers.module_of_interest = inspect.getmodule(
-            importer_frame
-        )  # XXX This is dirty
+        module_of_interest = inspect.getmodule(importer_frame)
+        if module_of_interest:
+            var_tracer = tracers.VarTracer(
+                trace=trace, module_of_interest=module_of_interest
+            )
+            # Setup tracing outside of functions
+            importer_frame.f_trace = var_tracer.trace_vars
 
-        # This will work next time we enter a function.
-        sys.settrace(tracers.trace_vars)
-    else:
-        print("Cannot trace")
+            # Setup tracing inside of functions
+            sys.settrace(var_tracer.trace_vars)
 
-    sys.stdout = outputLogger
+    sys.stdout = tracers.OutputLogger(trace=trace, stdout=sys.stdout)
 
     atexit.register(exit_handler)
+    catchable_sigs = set(signal.Signals) - {signal.SIGKILL, signal.SIGSTOP}
+    for sig in catchable_sigs:
+        signal.signal(sig, sig_handler)
 
 
 setup()

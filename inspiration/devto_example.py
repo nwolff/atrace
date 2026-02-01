@@ -2,7 +2,6 @@ import sys
 
 
 def trace_vars(frame, event, arg):
-
     if event != "line":
         return trace_vars
     code = frame.f_code
@@ -33,7 +32,6 @@ def trace_vars(frame, event, arg):
 
 
 def monitor(func):
-
     def wrapper(*args, **kwargs):
         global last_locals
         last_locals = {}
