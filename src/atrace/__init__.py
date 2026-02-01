@@ -5,7 +5,7 @@ import sys
 from types import FrameType
 from typing import Any, Optional
 
-from . import model, report, tracers
+from . import model, outputlogger, report, vartracer
 
 trace: model.Trace = []
 
@@ -48,16 +48,15 @@ def setup():
     if importer_frame:
         module_of_interest = inspect.getmodule(importer_frame)
         if module_of_interest:
-            var_tracer = tracers.VarTracer(
-                trace=trace, module_of_interest=module_of_interest
-            )
+            var_tracer = vartracer.VarTracer(trace, module_of_interest)
+
             # Setup tracing outside of functions
             importer_frame.f_trace = var_tracer.trace_vars
 
             # Setup tracing inside of functions
             sys.settrace(var_tracer.trace_vars)
 
-    sys.stdout = tracers.OutputLogger(trace=trace, stdout=sys.stdout)
+    sys.stdout = outputlogger.OutputLogger(trace=trace, stdout=sys.stdout)
 
     atexit.register(exit_handler)
     catchable_sigs = set(signal.Signals) - {signal.SIGKILL, signal.SIGSTOP}

@@ -7,13 +7,13 @@ class PrintEvent:
     text: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class Variable:
     function_name: str | None
     name: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class VariableChangeEvent:
     variable: Variable
     value: Any
@@ -23,7 +23,7 @@ class VariableChangeEvent:
 class TraceItem:
     line_no: int
     function_name: str
-    event: PrintEvent | VariableChangeEvent | None
+    event: PrintEvent | VariableChangeEvent
 
 
 Trace: TypeAlias = list[TraceItem]

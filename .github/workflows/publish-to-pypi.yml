@@ -25,6 +25,8 @@ jobs:
         uses: astral-sh/setup-uv@v7
       - name: Install Python 3.13
         run: uv python install 3.13
+      - name: Check
+        run: uv run ruff check src tests
       - name: Build
         run: uv build
       - name: Publish

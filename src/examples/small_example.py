@@ -1,4 +1,4 @@
-import atrace
+import atrace  # noqa
 
 x, y = 1, 3
 
@@ -6,12 +6,12 @@ while y > 0:
     x = x + 1
     y = y - 1
 
-print("sum", x)
+print("somme: ", x)
 
 
 def f(a, b):
     c = a + " " + b
-    print(c)
+    print(c, "!")
 
 
-f("hello", "everyone")
+f("Bonjour", "tout le monde")

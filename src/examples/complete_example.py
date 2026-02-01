@@ -1,17 +1,15 @@
-import atrace
+import atrace  # noqa
 
 x, y = 3, 6
 
 while x < y:
     x = x + 1
-    y = y - 1
 
 print("x", x)
-print("y", x)
 
-l = ["riri", "fifi", "loulou"]
-while l:
-    print(l.pop(0))
+kids = ["riri", "fifi", "loulou"]
+while kids:
+    print(kids.pop(0))
 
 
 for i in range(5):
@@ -22,6 +20,8 @@ def double(a):
     b = a * 2
     return b
 
+
+ligne = 666  # To test if it messes up the table header ligne
 
 print(double(6))
 

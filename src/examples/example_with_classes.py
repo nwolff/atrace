@@ -1,4 +1,4 @@
-import atrace
+import atrace  # noqa
 
 
 class Animal:

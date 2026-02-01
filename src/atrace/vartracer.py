@@ -1,8 +1,7 @@
 import copy
 import inspect
-import sys
 from types import FrameType, ModuleType
-from typing import Any, TextIO
+from typing import Any
 
 from atrace import model
 
@@ -24,7 +23,7 @@ def copy_carefully(d: dict[str, Any]):
     for k, v in d.items():
         try:
             v_copy = copy.deepcopy(v)
-        except:
+        except Exception:
             v_copy = v
         res[k] = v_copy
     return res
@@ -41,7 +40,6 @@ class VarTracer:
             return
         if event == "return":
             return
-        # print("####", event, frame.f_lineno, frame.f_code)
 
         code = frame.f_code
 
@@ -51,11 +49,9 @@ class VarTracer:
             old_locals = self.last_locals[code.co_name]
 
         locals_now = copy_carefully(filtered_variables(frame.f_locals))
-        # print("locals_now", locals_now)
 
         for var, new_val in filtered_variables(locals_now).items():
             if var not in old_locals or old_locals[var] != new_val:
-                # print("çççç", frame.f_lineno, var)
                 self.trace.append(
                     model.TraceItem(
                         line_no=frame.f_lineno,
@@ -71,34 +67,3 @@ class VarTracer:
 
         self.last_locals[code.co_name] = locals_now
         return self.trace_vars
-
-
-class OutputLogger(object):
-    """
-    OutputLogger captures and logs the output produced by print statements during code execution.
-    """
-
-    def __init__(self, trace: model.Trace, stdout: TextIO):
-        self.trace = trace
-        self.stdout = stdout
-
-    def write(self, text: str) -> None:
-        """
-        Write to stdout and record it in the trace
-        """
-        self.stdout.write(text)
-
-        frame = sys._getframe(1)
-        # An alternative that uses a public API, but then the type checker bothers me
-        # frame = inspect.currentframe().f_back
-
-        self.trace.append(
-            model.TraceItem(
-                line_no=frame.f_lineno,
-                function_name=frame.f_code.co_name,
-                event=model.PrintEvent(text),
-            )
-        )
-
-    def flush(self):
-        self.stdout.flush()
