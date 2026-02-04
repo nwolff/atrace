@@ -36,6 +36,7 @@ class VarTracer:
         self.last_locals: dict[str, Any] = {}
 
     def trace_vars(self, frame: FrameType, event: str, arg: Any):
+        print("VT")
         if inspect.getmodule(frame) != self.module_of_interest:
             return
         if event == "return":

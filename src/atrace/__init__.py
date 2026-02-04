@@ -65,12 +65,19 @@ def var_trace_for_code(code: str) -> model.Trace:
     if importer_frame:
         module_of_interest = inspect.getmodule(importer_frame)
         if module_of_interest:
+            print("module of interest:", module_of_interest)
             var_tracer = vartracer.VarTracer(trace, module_of_interest)
             try:
                 sys.settrace(var_tracer.trace_vars)
-                exec(code)
+
+                def f():
+                    exec(code)
+
+                f()
             finally:
                 sys.settrace(None)
+        else:
+            print("no module of interest")
     return trace
 
 
