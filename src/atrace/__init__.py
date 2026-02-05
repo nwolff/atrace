@@ -3,19 +3,24 @@ import inspect
 import signal
 import sys
 from types import FrameType
-from typing import Optional
+from typing import Optional, TextIO
 
-from . import model, outputlogger, report, vartracer
+from . import model, outputlogger, reporter, vartracer
 
-trace: model.Trace = []
+trace: model.Trace | None = None
 
 
-original_stdout = sys.stdout
+global_original_stdout: TextIO | None = None
+
+
+global_importer_frame: FrameType | None = None
 
 
 def exit_handler():
-    sys.stdout = original_stdout
-    report.dump_report(trace)
+    teardown_vartrace()
+    teardown_outputlogging()
+    if "unittest" not in sys.modules:
+        reporter.dump_report(trace)
 
 
 # https://stackoverflow.com/questions/23468042/the-invocation-of-signal-handler-and-atexit-handler-in-python
@@ -33,8 +38,8 @@ def get_importer_frame() -> Optional[FrameType]:
     return None
 
 
-def setup():
-    """See https://docs.python.org/3/library/sys.html#sys.settrace for an explanation of all the convoluted things in here"""
+def setup_vartrace():
+    """See https://docs.python.org/3/library/sys.html#sys.settrace"""
 
     # We want to only trace the module that imports us
     importer_frame = get_importer_frame()
@@ -50,36 +55,44 @@ def setup():
             # Setup tracing outside of functions
             importer_frame.f_trace = var_tracer.trace_vars
 
+            global global_importer_frame
+            global_importer_frame = importer_frame
+
+
+def setup_outputlogging(trace):
+    global global_original_stdout
+    global_original_stdout = sys.stdout
     sys.stdout = outputlogger.OutputLogger(trace=trace, stdout=sys.stdout)
 
+
+def setup_exit_handlers():
     atexit.register(exit_handler)
     catchable_sigs = set(signal.Signals) - {signal.SIGKILL, signal.SIGSTOP}
     for sig in catchable_sigs:
         signal.signal(sig, sig_handler)
 
 
-def var_trace_for_code(code: str) -> model.Trace:
-    trace: model.Trace = []
-    # We want to only trace the module that imports us
-    importer_frame = get_importer_frame()
-    if importer_frame:
-        module_of_interest = inspect.getmodule(importer_frame)
-        if module_of_interest:
-            print("module of interest:", module_of_interest)
-            var_tracer = vartracer.VarTracer(trace, module_of_interest)
-            try:
-                sys.settrace(var_tracer.trace_vars)
-
-                def f():
-                    exec(code)
-
-                f()
-            finally:
-                sys.settrace(None)
-        else:
-            print("no module of interest")
-    return trace
+def teardown_vartrace():
+    sys.settrace(None)
+    if global_importer_frame is not None:
+        global_importer_frame.f_trace = None
 
 
-if "pytest" not in sys.modules:
-    setup()
+def teardown_outputlogging():
+    sys.stdout = global_original_stdout
+
+
+def trace_next_loaded_module():
+    global trace
+    trace = []
+    setup_outputlogging(trace)
+    var_tracer = vartracer.VarTracer(trace, None)
+
+    sys.settrace(var_tracer.trace_vars)
+
+
+if "unittest" not in sys.modules:
+    trace = []
+    setup_vartrace()
+    setup_outputlogging(trace)
+    setup_exit_handlers()
