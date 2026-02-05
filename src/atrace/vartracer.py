@@ -1,5 +1,4 @@
 import copy
-import inspect
 from types import FrameType, ModuleType
 from typing import Any
 
@@ -34,11 +33,30 @@ class VarTracer:
         self.trace = trace
         self.module_of_interest = module_of_interest
         self.last_locals: dict[str, Any] = {}
+        self.last_line = -1  # XXX
+        # print("VT init. MOI: ", module_of_interest)
 
     def trace_vars(self, frame: FrameType, event: str, arg: Any):
-        print("VT")
-        if inspect.getmodule(frame) != self.module_of_interest:
+        """
+        event is either 'call', 'line', 'return', 'exception' or 'opcode'
+        """
+        # print("VT", frame, inspect.getmodule(frame), event)
+        # if inspect.getmodule(frame) != self.module_of_interest:
+        if frame.f_code.co_name != "<module>":
             return
+
+        """
+        print(
+            "frame lineno",
+            frame.f_lineno,
+            ". event",
+            event,
+            ". locals",
+            filtered_variables(frame.f_locals),
+        )
+        """
+        # print("MYFRAMEEEEEEEE")
+        """
         if event == "return":
             self.trace.append(
                 model.TraceItem(
@@ -49,28 +67,39 @@ class VarTracer:
                     ),
                 )
             )
+        """
+        if event == "line" or event == "return":
+            """
+            print(
+                "frame lineno",
+                frame.f_lineno,
+                ". event",
+                event,
+                ". locals",
+                filtered_variables(frame.f_locals),
+            )"""
 
-        code = frame.f_code
+            code = frame.f_code
 
-        if code.co_name not in self.last_locals:
-            old_locals = {}
-        else:
-            old_locals = self.last_locals[code.co_name]
+            if code.co_name not in self.last_locals:
+                old_locals = {}
+            else:
+                old_locals = self.last_locals[code.co_name]
 
-        locals_now = copy_carefully(filtered_variables(frame.f_locals))
+            locals_now = copy_carefully(filtered_variables(frame.f_locals))
 
-        for var, new_val in filtered_variables(locals_now).items():
-            if var not in old_locals or old_locals[var] != new_val:
-                self.trace.append(
-                    model.TraceItem(
-                        line_no=frame.f_lineno,
-                        function_name=frame.f_code.co_name,
-                        event=model.VariableChangeEvent(
-                            variable=model.Variable(scope=code.co_name, name=var),
-                            value=new_val,
-                        ),
+            for var, new_val in filtered_variables(locals_now).items():
+                if var not in old_locals or old_locals[var] != new_val:
+                    self.trace.append(
+                        model.TraceItem(
+                            line_no=self.last_line,
+                            function_name=frame.f_code.co_name,
+                            event=model.VariableChangeEvent(
+                                variable=model.Variable(scope=code.co_name, name=var),
+                                value=new_val,
+                            ),
+                        )
                     )
-                )
-
-        self.last_locals[code.co_name] = locals_now
+            self.last_locals[code.co_name] = locals_now
+        self.last_line = frame.f_lineno
         return self.trace_vars

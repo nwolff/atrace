@@ -18,17 +18,12 @@ Does not work with :
 
 # TODO
 
-- Unit tests for the capture part (because the line numbers are so hard). If pytest adds too much magic, then revert to UnitTest
 - Fix line numbers in trace_vars. https://discuss.python.org/t/trace-a-line-after-the-line-but-not-only-before-the-line/89475/7
   This might not even be possible. Start solving it without functions in the scope.
 
-- Handle returns (with and without return statements)
+- Handle returns (with and without return statements / with and without return values)
 
 - Thonny, which adds a lot of indirection and magic. Try and find a way to edit the package directly when running in thonny
-
-# Later
-
-- localize the names of the line and output columns in the report
 
 # Done
 
