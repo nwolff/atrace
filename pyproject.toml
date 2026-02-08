@@ -1,7 +1,9 @@
 [project]
 name = "atrace"
-version = "0.1.7"
-description = "Generate trace tables for programs"
+version = "0.1.8"
+description = "Generate trace tables for simple programs"
+license = "MIT"
+license-files = ["LICENSE"]
 readme = "README.md"
 authors = [{ name = "Nicholas Wolff", email = "nwolff@gmail.com" }]
 requires-python = ">=3.10"
@@ -15,11 +17,4 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [dependency-groups]
-dev = [
-    "mypy>=1.19.1",
-    "ruff>=0.14.14",
-    "types-tabulate>=0.9.0.20241207",
-]
-
-[tool.uv.workspace]
-members = ["src/examples"]
+dev = ["mypy>=1.19.1", "ruff>=0.14.14", "types-tabulate>=0.9.0.20241207"]

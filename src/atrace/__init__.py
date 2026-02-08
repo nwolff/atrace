@@ -44,19 +44,17 @@ def setup_vartrace():
     # We want to only trace the module that imports us
     importer_frame = get_importer_frame()
     if importer_frame:
-        module_of_interest = inspect.getmodule(importer_frame)
-        if module_of_interest:
-            var_tracer = vartracer.VarTracer(trace, module_of_interest)
+        var_tracer = vartracer.VarTracer(trace, importer_frame)
 
-            # Setup tracing inside of functions.
-            # Order is important. This must be called before seting the trace function for the current frame
-            sys.settrace(var_tracer.trace_vars)
+        # Setup tracing inside of functions.
+        # Order is important. This must be called before seting the trace function for the current frame
+        sys.settrace(var_tracer.trace_vars)
 
-            # Setup tracing outside of functions
-            importer_frame.f_trace = var_tracer.trace_vars
+        # Setup tracing outside of functions
+        importer_frame.f_trace = var_tracer.trace_vars
 
-            global global_importer_frame
-            global_importer_frame = importer_frame
+        global global_importer_frame
+        global_importer_frame = importer_frame
 
 
 def setup_outputlogging(trace):

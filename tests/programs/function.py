@@ -1,9 +1,9 @@
 import atrace  # noqa
 
 
-def f(a, b):
-    c = a + b
-    return c
+def double(a):
+    result = a * 2
+    return result
 
 
-print(f(3, 14))
+x = double(3)

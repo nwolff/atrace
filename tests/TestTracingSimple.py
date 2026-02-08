@@ -4,7 +4,7 @@ import atrace
 from atrace.model import PrintEvent, TraceItem, Variable, VariableChangeEvent
 
 
-class TestTracing(unittest.TestCase):
+class TestTracingSimple(unittest.TestCase):
     def test_print(self):
         atrace.trace_next_loaded_module()
 
@@ -117,7 +117,7 @@ class TestTracing(unittest.TestCase):
         ]
         self.assertEqual(expected, atrace.trace)
 
-    def test_tight_loop(self):
+    def test_assignment_in_tight_loop(self):
         atrace.trace_next_loaded_module()
 
         from .programs import tight_loop  # noqa
