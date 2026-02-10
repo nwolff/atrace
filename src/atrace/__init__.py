@@ -5,9 +5,9 @@ import sys
 from types import FrameType
 from typing import Optional, TextIO
 
-from . import model, outputlogger, reporter, vartracer
+from . import outputlogger, reporter, vartracer
 
-trace: model.Trace | None = None
+trace: vartracer.Trace | None = None
 
 
 global_original_stdout: TextIO | None = None

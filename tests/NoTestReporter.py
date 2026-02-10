@@ -1,12 +1,6 @@
 import unittest
 
-from atrace.model import (
-    PrintEvent,
-    ReturnEvent,
-    TraceItem,
-    Variable,
-    VariableChangeEvent,
-)
+from atrace.model import ReturnEvent, TraceItem
 from atrace.reporter import Instant, trace_to_instants
 
 
@@ -126,6 +120,37 @@ class TestReporter(unittest.TestCase):
                 variable_changes={},
                 output="helloworld",
             ),
+        ]
+        self.assertEqual(expected, trace_to_instants(trace))
+
+    def test_dont_coalesce_in_loop(self):
+        trace = [
+            TraceItem(line_no=5, function_name="<module>", event=PrintEvent(text="a")),
+            TraceItem(line_no=5, function_name="<module>", event=PrintEvent(text="\n")),
+            TraceItem(
+                line_no=5,
+                function_name="<module>",
+                event=VariableChangeEvent(
+                    variable=Variable(scope="<module>", name="lst"), value=["b"]
+                ),
+            ),
+            TraceItem(line_no=5, function_name="<module>", event=PrintEvent(text="b")),
+            TraceItem(line_no=5, function_name="<module>", event=PrintEvent(text="\n")),
+        ]
+
+        expected = [
+            Instant(
+                line_no=5,
+                variable_changes={Variable(scope="<module>", name="lst"): ["b"]},
+                output="a\n",
+            ),
+            [
+                Instant(
+                    line_no=5,
+                    variable_changes={},
+                    output="b\n",
+                )
+            ],
         ]
         self.assertEqual(expected, trace_to_instants(trace))
 

@@ -1,10 +1,13 @@
 # TODO
 
-- Handle returns (with and without return statements / with and without return values)
-
 - Do I still need manual teardowns and/or hooks ?
-
 - Thonny, which adds a lot of indirection and magic. Try and find a way to edit the package directly when running in thonny when debugging.
+
+# Nice to have
+
+- Try and show recursive invocations better (materializing the return events in the trace? )
+- Don't show "affichage" if there are no output events in the trace
+- localize report
 
 # Linting
 
@@ -16,10 +19,11 @@
 
 # Running unit tests
 
-We don't use pytest because it does a lot of instrumentation in parallel to ours, and it causes a lot of trouble.
+We use unittest instead of pytest, because pytest's heavy instrumentation of the code causes trouble.
 
     uv run python -m unittest tests/Test*
 
 # Build
 
-Automatically deployed to pypi every time a new tag is pushed: https://pypi.org/project/atrace/
+Every time we push a new tag, the package is automatically deployed to pypi:
+https://pypi.org/project/atrace/

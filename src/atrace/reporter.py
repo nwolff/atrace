@@ -1,46 +1,48 @@
 from dataclasses import dataclass
 from typing import Any, TypeAlias
 
+from icecream import ic
 from tabulate import tabulate
 
-from . import model
+from . import vartracer
+
+
+@dataclass(frozen=True)
+class Variable:
+    scope: str
+    name: str
 
 
 @dataclass
 class Instant:
     line_no: int
-    variable_changes: dict[model.Variable, Any]
+    variable_changes: dict[Variable, Any]
     output: str
 
 
 Instants: TypeAlias = list[Instant]
 
 
-def trace_to_instants(trace: model.Trace) -> Instants:
+def trace_to_instants(trace: vartracer.Trace) -> Instants:
     instants = []
-    instant = None
+    last_item = trace.pop(0)
+    last_line = last_item.line_no
     for trace_item in trace:
-        if instant is None or instant.line_no != trace_item.line_no:
-            instant = Instant(trace_item.line_no, {}, "")
-            instants.append(instant)
-
         match trace_item.event:
-            case model.PrintEvent(text):
-                instant.output += text
-            case model.VariableChangeEvent(variable, value):
-                # Don't clobber an existing value a variable if it changes again on the same line
-                # (this happens for example in tight loops)
-                if variable in instant.variable_changes:
-                    instant = Instant(trace_item.line_no, {}, "")
-                    instants.append(instant)
-                instant.variable_changes[variable] = value
-            case model.ReturnEvent():
-                pass  # XXX
-
+            case vartracer.LineEvent(locals):
+                pass
+            case vartracer.CallEvent(locals):
+                pass
+            case vartracer.ReturnEvent(locals, _return_value):
+                pass
+            case vartracer.ExceptionEvent(_locals, _exception, _value, _traceback):
+                pass
+            case vartracer.OutputEvent(text):
+                pass
     return instants
 
 
-def variable_to_column_name(var: model.Variable) -> str:
+def variable_to_column_name(var: Variable) -> str:
     return var.name if var.scope == "<module>" else f"({var.scope}) {var.name}"
 
 
@@ -68,7 +70,7 @@ def formatted_table_from_instants(instants: Instants) -> str:
     return tabulate(table, headers="keys", tablefmt="simple_outline")
 
 
-def dump_report(trace: model.Trace) -> None:
+def dump_report(trace: vartracer.Trace) -> None:
     instants = trace_to_instants(trace)
     formatted_table = formatted_table_from_instants(instants)
     print(formatted_table)

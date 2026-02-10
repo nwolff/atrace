@@ -1,9 +1,76 @@
 import copy
 import sys
-from types import FrameType, ModuleType
-from typing import Any
+from dataclasses import dataclass
+from types import FrameType, ModuleType, TracebackType
+from typing import Any, TypeAlias
 
-from atrace import model
+"""
+See:
+    https://docs.python.org/3/library/sys.html#sys.settrace
+    https://docs.python.org/3/library/inspect.html
+"""
+
+
+@dataclass(frozen=True)
+class ExecutionEvent:
+    locals: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class LineEvent(ExecutionEvent):
+    """
+    The interpreter is about to execute a new line of code or re-execute the condition of a loop
+    """
+
+
+@dataclass(frozen=True)
+class CallEvent(ExecutionEvent):
+    """
+    A function is called (or some other code block entered).
+    This is emitted before entering the function (in most cases this is on the line of the function def)
+    One can already see:
+        - The function name
+        - The bound parameters
+    """
+
+
+@dataclass(frozen=True)
+class ReturnEvent(ExecutionEvent):
+    """
+    A function (or other code block) is about to return.
+    """
+
+    return_value: Any
+
+
+@dataclass(frozen=True)
+class ExceptionEvent(ExecutionEvent):
+    """
+    An exception has occured
+    """
+
+    exception: Exception
+    value: Any
+    traceback: TracebackType
+
+
+@dataclass(frozen=True)
+class OutputEvent:
+    """
+    Some text was written to stdout
+    """
+
+    text: str
+
+
+@dataclass(frozen=True)
+class TraceItem:
+    line_no: int
+    function_name: str
+    event: LineEvent | CallEvent | ReturnEvent | ExceptionEvent | OutputEvent
+
+
+Trace: TypeAlias = list[TraceItem]
 
 
 def ignore_variable(name: str, value: Any):
@@ -18,7 +85,7 @@ def filtered_variables(variables: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def copy_carefully(d: dict[str, Any]):
+def copy_carefully(d: dict[str, Any]) -> dict[str, Any]:
     res = {}
     for k, v in d.items():
         try:
@@ -29,87 +96,64 @@ def copy_carefully(d: dict[str, Any]):
     return res
 
 
+CONAME = "<module>"
+
+
 class VarTracer:
-    def __init__(self, trace: model.Trace, attached_to_frame: FrameType | None):
+    def __init__(self, trace: Trace, attached_to_frame: FrameType | None):
         self.trace = trace
         self.attached_to_frame = attached_to_frame
-        self.first_frame_of_interest: FrameType | None = None
-        self.last_locals: dict[str, Any] = {}
-        self.last_line = -1  # XXX
+        self.filename_of_interest: str | None = None
 
     def trace_vars(self, frame: FrameType, event: str, arg: Any):
-        """
-        event is either 'call', 'line', 'return', 'exception' or 'opcode'
-        """
-        if not self.first_frame_of_interest:
-            if frame.f_code.co_name == "<module>":
-                # print("found frame of interest", frame)
-                self.first_frame_of_interest = frame
-                self.filename = frame.f_code.co_filename
+        if not self.filename_of_interest:
+            if frame.f_code.co_name == CONAME:
+                # self.first_frame_of_interest = frame
+                self.filename_of_interest = frame.f_code.co_filename
             else:
                 return
 
-        # print(self.filename, frame.f_code.co_filename)
-        if frame.f_code.co_filename != self.filename:
+        if frame.f_code.co_filename != self.filename_of_interest:
             return
-        # if frame.f_code != self.module:
-        #    return
 
-        """
-        print(
-            "frame lineno",
-            frame.f_lineno,
-            ". event",
-            event,
-            ". module",
-            frame.f_code.co_name,
-            ". locals",
-            filtered_variables(frame.f_locals),
-        )"""
+        locals = copy_carefully(filtered_variables(frame.f_locals))
+        trace_event = None
+        match event:
+            case "line":
+                trace_event = LineEvent(locals=locals)
+            case "call":
+                trace_event = CallEvent(locals=locals)
+            case "return":
+                trace_event = ReturnEvent(locals=locals, return_value=arg)
+            case "exception":
+                trace_event = ExceptionEvent(
+                    locals=locals, exception=arg[0], value=arg[1], traceback=arg[2]
+                )
+            case _:
+                print("Unexpected event", event)
 
-        if event in ("line", "return"):
-            code = frame.f_code
-
-            if code.co_name not in self.last_locals:
-                old_locals = {}
-            else:
-                old_locals = self.last_locals[code.co_name]
-
-            locals_now = copy_carefully(filtered_variables(frame.f_locals))
-
-            for var, new_val in filtered_variables(locals_now).items():
-                # print("ZZ", var, new_val)  # XXX
-                if var not in old_locals or old_locals[var] != new_val:
-                    self.trace.append(
-                        model.TraceItem(
-                            line_no=self.last_line,
-                            function_name=frame.f_code.co_name,
-                            event=model.VariableChangeEvent(
-                                variable=model.Variable(scope=code.co_name, name=var),
-                                value=new_val,
-                            ),
-                        )
-                    )
-            self.last_locals[code.co_name] = locals_now
-        if event == "return":
-            if frame == self.first_frame_of_interest:
-                self.unload()
-                # print("ITS THE END OF THE WORLD")  # XXX
-            """
+        if trace_event:
             self.trace.append(
-                model.TraceItem(
+                TraceItem(
                     line_no=frame.f_lineno,
                     function_name=frame.f_code.co_name,
-                    event=model.ReturnEvent(
-                        function_name=frame.f_code.co_name, return_value=arg  # XXX
-                    ),
+                    event=trace_event,
                 )
-            )"""
-        self.last_line = frame.f_lineno
+            )
+
+        # Unload if the job is done.
+        # We do this only after recording the return event (for instance for changes to variables that occured the line before)
+        if (
+            event == "return"
+            and frame.f_code.co_filename == self.filename_of_interest
+            and frame.f_code.co_name == CONAME
+        ):
+            self.unload()
+            return
+
         return self.trace_vars  # Not really sure this does anything
 
     def unload(self):
-        # print("unloading")  # XXX
         sys.settrace(None)
         if self.attached_to_frame:
             self.attached_to_frame.f_trace = None

@@ -1,6 +1,6 @@
 # Usage
 
-Automatically prints a trace table of a program once the execution is finished.
+Automatically prints a trace table of a simple program once the execution is finished.
 
 Just import the module.
 
@@ -26,6 +26,10 @@ Does not work with :
 - Multithreaded programs
 - Multi-module programs
 - Classes
+- List comprehensions
+- Generators
+- Lambdas
+- Debuggers
 
 # Done
 
