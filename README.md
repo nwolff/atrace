@@ -12,7 +12,7 @@ x, y = 1, 3
 ...
 ```
 
-For instance running test/programs/small_example.py will print :
+For instance running test/programs/small_example.py will print:
 
 ```
 ┌────────┬─────┬─────┬────────┬─────────────┬───────────────────┬──────────────┐
@@ -30,14 +30,12 @@ For instance running test/programs/small_example.py will print :
 
 ```
 
-## Does not work with
+## Does not work well with
 
 - Multithreaded programs
 - Multi-module programs
-- Classes
-- List comprehensions
-- Generators
-- Lambdas
 - Debuggers
-- Context managers
+- Classes
 - Variables containing functions
+- Context managers
+- Generators

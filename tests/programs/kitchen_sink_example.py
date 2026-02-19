@@ -14,6 +14,11 @@ while kids:
     print(kids.pop(0))
 
 
+lst = [x**2 for x in range(4)]
+
+add = lambda x, y: x + y  # noqa
+print(add(5, 3))
+
 for i in range(3):
     print(i)
 

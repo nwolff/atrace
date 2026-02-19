@@ -1,14 +1,13 @@
 import inspect
 import sys
 from types import FrameType
-from typing import Optional
 
 from .analyzer import trace_to_history
-from .reporter import history_to_table
+from .reporter import history_to_report
 from .tracer import DoneCallback, Trace, Tracer
 
 
-def get_importer_frame() -> Optional[FrameType]:
+def get_importer_frame() -> FrameType | None:
     # Get the current call stack
     for frame_info in inspect.stack():
         # Filter out internal importlib frames and the current module's frame
@@ -24,8 +23,8 @@ def trace_next_loaded_module(done_callback: DoneCallback):
 
 def dump_report(trace: Trace):
     history = trace_to_history(trace)
-    formatted_table = history_to_table(history)
-    print(formatted_table)
+    report = history_to_report(history)
+    print(report)
 
 
 if "unittest" not in sys.modules:

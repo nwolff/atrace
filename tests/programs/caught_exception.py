@@ -1,7 +1,6 @@
 import atrace  # noqa
 
-print("hai")
 try:
-    raise Exception("an exception")
+    raise Exception("error message")
 except Exception as e:
     print(e)

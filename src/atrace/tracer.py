@@ -15,30 +15,27 @@ class Loc:
     function_name: str
     line_no: int
 
-    def __repr__(self):
-        return f"""Loc("{self.function_name}", {self.line_no})"""
-
 
 Symbols: TypeAlias = dict[str, Any]
 
 
 @dataclass(frozen=True)
-class _ExecutionEvent:
+class ExecutionEvent:
     globals: Symbols
     locals: Symbols
 
 
 @dataclass(frozen=True)
-class LineEvent(_ExecutionEvent):
+class Line(ExecutionEvent):
     """
     The interpreter is about to execute a new line of code or re-execute the condition of a loop
     """
 
 
 @dataclass(frozen=True)
-class CallEvent(_ExecutionEvent):
+class Call(ExecutionEvent):
     """
-    A function is called (or some other code block entered).
+    A function is called or some other code block entered.
     This is emitted before entering the function (in most cases this is on the line of the function def)
     One can already see:
         - The function name
@@ -47,16 +44,16 @@ class CallEvent(_ExecutionEvent):
 
 
 @dataclass(frozen=True)
-class ReturnEvent(_ExecutionEvent):
+class Return(ExecutionEvent):
     """
-    A function (or other code block) is about to return.
+    A function or other code block is about to return.
     """
 
     return_value: Any
 
 
 @dataclass(frozen=True)
-class ExceptionEvent(_ExecutionEvent):
+class ExceptionOccured(ExecutionEvent):
     """
     An exception has occurred
     """
@@ -67,7 +64,7 @@ class ExceptionEvent(_ExecutionEvent):
 
 
 @dataclass(frozen=True)
-class OutputEvent:
+class Output:
     """
     Some text was written to stdout
     """
@@ -75,9 +72,7 @@ class OutputEvent:
     text: str
 
 
-ExecutionEvent: TypeAlias = LineEvent | CallEvent | ReturnEvent | ExceptionEvent
-
-Event: TypeAlias = ExecutionEvent | OutputEvent
+Event: TypeAlias = Line | Call | Return | ExceptionOccured | Output
 
 Trace: TypeAlias = list[tuple[Loc, Event]]
 
@@ -127,12 +122,7 @@ class OutputLogger:
 
         frame = sys._getframe(1)
 
-        self.trace.append(
-            (
-                Loc(frame.f_code.co_name, frame.f_lineno),
-                OutputEvent(text),
-            )
-        )
+        self.trace.append((Loc(frame.f_code.co_name, frame.f_lineno), Output(text)))
 
     def flush(self):
         self.stdout.flush()
@@ -157,15 +147,15 @@ class Tracer:
     def trace_vars(self, frame: FrameType, event: str, arg: Any):
         if not self.filename_of_interest:
             if frame.f_code.co_name == CONAME:
-                # Until now we were lurking, finding out when to start collecting info
-                # It's time to get to work
+                # Until now we were lurking, finding out when to start collecting info.
+                # It's time to get to work.
                 self.filename_of_interest = frame.f_code.co_filename
                 sys.stdout = OutputLogger(trace=self.trace, stdout=self.original_stdout)
             else:
-                return
+                return None
 
         if frame.f_code.co_filename != self.filename_of_interest:
-            return
+            return None
 
         globals = copy_carefully(filtered_variables(frame.f_globals))
         if frame.f_locals is frame.f_globals:
@@ -176,15 +166,13 @@ class Tracer:
         trace_event: Event | None = None
         match event:
             case "line":
-                trace_event = LineEvent(globals=globals, locals=locals)
+                trace_event = Line(globals=globals, locals=locals)
             case "call":
-                trace_event = CallEvent(globals=globals, locals=locals)
+                trace_event = Call(globals=globals, locals=locals)
             case "return":
-                trace_event = ReturnEvent(
-                    globals=globals, locals=locals, return_value=arg
-                )
+                trace_event = Return(globals=globals, locals=locals, return_value=arg)
             case "exception":
-                trace_event = ExceptionEvent(
+                trace_event = ExceptionOccured(
                     globals=globals,
                     locals=locals,
                     exception=arg[0],
@@ -205,9 +193,9 @@ class Tracer:
             and frame.f_code.co_name == CONAME
         ):
             self.unload()
-            return
+            return None
 
-        return self.trace_vars  # XXX: Not really sure this does anything
+        return self.trace_vars
 
     def unload(self):
         sys.settrace(None)

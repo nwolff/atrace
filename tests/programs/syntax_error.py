@@ -1,4 +1,6 @@
 # type: ignore
 import atrace  # noqa
 
-f(1)  # noqa
+x = 1
+
+f(x)  # noqa

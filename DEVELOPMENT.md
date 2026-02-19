@@ -1,17 +1,6 @@
 # TODO
 
-- Thonny, which adds a lot of indirection and magic.
-
-- all XXX
-- Assert stuff in abrupt termination
-
-- problem when repeating a test
-- Get rid of the test specific initialization ?
-
-- cleanup even when exception
-
-- update docs if we remove exit handlers. Emits the trace at the end if the application ends normally and abruptly (
-  exception, signal, etc.)
+Make it work in Thonny
 
 # Linting
 
@@ -31,7 +20,7 @@ To run all tests:
 
 To run a single test (module.file.class.method):
 
-    uv run python -m unittest tests.test_simple.TestSimple.test_assignment
+    uv run python -m unittest tests.test_simple.TestSimple.test_assign_then_print
 
 # Coverage
 
@@ -64,7 +53,7 @@ Then edit the newly created .po file
 Here for fr_FR:
 
     export LANG=fr_FR
-    uv run tests/programs/small.py
+    uv run tests/programs/small_example.py
 
 # Deployment
 

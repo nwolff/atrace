@@ -1,6 +1,6 @@
 [project]
 name = "atrace"
-version = "0.6.0"
+version = "0.7.0"
 description = "Generate trace tables for simple programs"
 license = "MIT"
 license-files = ["LICENSE"]
