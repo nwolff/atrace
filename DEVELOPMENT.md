@@ -1,16 +1,22 @@
-# TODO
+## Running example programs
 
-Make it work in Thonny
+With cpython:
 
-# Linting
+    uv run tests/programs/small_example.py
+
+With pypy:
+
+    uv run --python pypy tests/programs/small_example.py
+
+## Linting
 
     uv run ruff check src tests
 
-# Type Checking
+## Type Checking
 
     uv run mypy src tests
 
-# Running unit tests
+## Running unit tests
 
 We use unittest instead of pytest, because pytest's heavy instrumentation of the code causes trouble.
 
@@ -22,21 +28,21 @@ To run a single test (module.file.class.method):
 
     uv run python -m unittest tests.test_simple.TestSimple.test_assign_then_print
 
-# Coverage
+## Coverage
 
     uv run coverage run -m unittest discover
 
     uv run coverage html
 
-# Translating
+## Translating
 
-## Whenever code changes
+### Whenever code changes
 
     uv run pybabel extract -o locale/atrace.pot src
 
     uv run pybabel update -i locale/atrace.pot -D atrace -d locale
 
-## To add a language
+### To add a language
 
 Here for fr_FR:
 
@@ -44,18 +50,26 @@ Here for fr_FR:
 
 Then edit the newly created .po file
 
-## After modifying any .po file
+### After modifying any .po file
 
     uv run pybabel compile -D atrace -d locale
 
-## To verify translations
+### To verify translations
 
 Here for fr_FR:
 
     export LANG=fr_FR
     uv run tests/programs/small_example.py
 
-# Deployment
+## Developing for Thonny
 
-Every time we push a new tag, the package is automatically deployed to pypi:
+Thonny installs packages in the user specific python library directory:
+
+On mac it's something like: ~/Library/Python/3.10/lib/python/site-packages
+
+## Deployment
+
+Every time we push to main, the code is checked and unittests are run.
+
+Every time we push a new tag, the package gets automatically deployed to pypi:
 https://pypi.org/project/atrace/

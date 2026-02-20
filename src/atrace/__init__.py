@@ -24,6 +24,7 @@ def trace_next_loaded_module(done_callback: DoneCallback):
 def dump_report(trace: Trace):
     history = trace_to_history(trace)
     report = history_to_report(history)
+    print()
     print(report)
 
 
@@ -31,4 +32,9 @@ if "unittest" not in sys.modules:
     # We want to only trace the module that imports us
     importer_frame = get_importer_frame()
     if importer_frame:
+        # When running in thonny we need to step up one level because
+        # we get imported from a backend custom_import.
+        # We got this extra step even when not in thonny, there is no negative impact.
+        if importer_frame.f_back:
+            importer_frame = importer_frame.f_back
         Tracer(dump_report, importer_frame)

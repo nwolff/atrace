@@ -22,8 +22,9 @@ def history_to_table(history: History) -> list[Row]:
     all_variables = []
     has_output = False
 
-    # Collect all variables in order of appearance.
-    # Also determine if we need an output column in the table.
+    # Prepare:
+    # - Collect all variables in order of appearance.
+    # - Determine if we need an output column in the table.
     for _, assignments, output in history:
         for variable in assignments or []:
             if variable not in all_variables:
@@ -31,7 +32,7 @@ def history_to_table(history: History) -> list[Row]:
         if output:
             has_output = True
 
-    # Time to build the table datastructure
+    # Time to build the table
     table = []
     for loc, assignments, output in history:
         row: Row = {}
@@ -62,4 +63,4 @@ def history_to_table(history: History) -> list[Row]:
 
 def history_to_report(history: History) -> str:
     table = history_to_table(history)
-    return tabulate(table, headers="keys", tablefmt="simple_outline")
+    return tabulate(table, headers="keys", tablefmt="rounded_outline")

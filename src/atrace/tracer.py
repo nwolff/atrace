@@ -79,7 +79,7 @@ Trace: TypeAlias = list[tuple[Loc, Event]]
 DoneCallback = Callable[[Trace], None]
 
 
-def ignore_variable(name: str, value: Any):
+def ignore_variable(name: str, value: Any) -> bool:
     return name.startswith("__") or callable(value) or isinstance(value, ModuleType)
 
 
@@ -91,9 +91,16 @@ def filtered_variables(variables: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def ignore_function(name: str) -> bool:
+    return name.startswith("__")
+
+
 def copy_carefully(symbols: Symbols) -> Symbols:
     """
-    We don't want the program to blow if there is some o
+    In order to capture mutations to values, we try to deepcopy them at each step.
+    If we cannot deepcopy an item, we revert to just referencing it:
+    - The program doesn't break
+    - We may not be able to see some mutations.
     """
     res = {}
     for k, v in symbols.items():
@@ -107,7 +114,8 @@ def copy_carefully(symbols: Symbols) -> Symbols:
 
 class OutputLogger:
     """
-    OutputLogger wraps stdout, passing down writes and flushes to it, while simultaneously capturing the text to the trace.
+    OutputLogger wraps stdout.
+    It passes down writes and flushes to it, while simultaneously capturing the text to the trace.
     """
 
     def __init__(self, trace: Trace, stdout: TextIO):
@@ -140,6 +148,7 @@ class Tracer:
         self.trace: Trace = []
         self.original_stdout = sys.stdout
         self.filename_of_interest: str | None = None
+
         sys.settrace(self.trace_vars)
         if attached_to_frame:
             attached_to_frame.f_trace = self.trace_vars
@@ -154,7 +163,13 @@ class Tracer:
             else:
                 return None
 
+        # We don't want to step out of the file we are tracing
         if frame.f_code.co_filename != self.filename_of_interest:
+            return None
+
+        # Some very dynamic environment (such as Thonny) start loading proxies and stuff during our module execution.
+        # Don't trace those.
+        if ignore_function(frame.f_code.co_name):
             return None
 
         globals = copy_carefully(filtered_variables(frame.f_globals))
@@ -185,8 +200,8 @@ class Tracer:
         if trace_event:
             self.trace.append((Loc(frame.f_code.co_name, frame.f_lineno), trace_event))
 
+        # Detect if we are leaving the module we wanted to trace.
         # Unload if the job is done.
-        # We first record the return event in the trace, it could be witness to variable changes that happened before
         if (
             event == "return"
             and frame.f_code.co_filename == self.filename_of_interest

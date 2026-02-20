@@ -64,7 +64,7 @@ class TestReporterFinalResult(unittest.TestCase):
             (Loc("<module>", 18), {}, "bonjour bob!\n"),
         ]
         expected_result = """\
-        ┌────────┬─────┬─────┬────────┬─────────────┬───────────────────┬──────────────┐
+        ╭────────┬─────┬─────┬────────┬─────────────┬───────────────────┬──────────────╮
         │   line │   x │   y │ t      │ (greet) n   │ (greet) message   │ output       │
         ├────────┼─────┼─────┼────────┼─────────────┼───────────────────┼──────────────┤
         │      3 │   1 │   3 │        │             │                   │              │
@@ -75,5 +75,5 @@ class TestReporterFinalResult(unittest.TestCase):
         │     13 │     │     │        │ bob         │                   │              │
         │     14 │     │     │        │             │ bonjour bob!      │              │
         │     18 │     │     │        │             │                   │ bonjour bob! │
-        └────────┴─────┴─────┴────────┴─────────────┴───────────────────┴──────────────┘"""
+        ╰────────┴─────┴─────┴────────┴─────────────┴───────────────────┴──────────────╯"""
         self.assertEqual(textwrap.dedent(expected_result), history_to_report(history))

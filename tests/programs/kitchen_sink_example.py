@@ -40,6 +40,7 @@ def recursive_count(x):
 
 print(recursive_count(4))
 
-answer = input("question ")
+answer = input("question: ")
+print(answer)
 
 raise Exception("an exception")
