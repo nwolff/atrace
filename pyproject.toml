@@ -29,10 +29,6 @@ dependencies = ["tabulate>=0.9.0"]
 [project.urls]
 Homepage = "https://github.com/nwolff/atrace.git"
 
-[build-system]
-requires = ["hatchling", "hatch-vcs"]
-build-backend = "hatchling.build"
-
 [dependency-groups]
 dev = [
     "babel>=2.18.0",
@@ -42,6 +38,10 @@ dev = [
     "types-mock>=5.2.0.20250924",
     "types-tabulate>=0.9.0.20241207",
 ]
+
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
 
 [tool.hatch.version]
 source = "vcs"

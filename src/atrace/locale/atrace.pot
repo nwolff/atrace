@@ -1,28 +1,27 @@
-# French (France) translations for PROJECT.
+# Translations template for PROJECT.
 # Copyright (C) 2026 ORGANIZATION
 # This file is distributed under the same license as the PROJECT project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
+#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-02-19 23:28+0100\n"
-"PO-Revision-Date: 2026-02-16 13:40+0100\n"
+"POT-Creation-Date: 2026-02-21 17:26+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: fr_FR\n"
-"Language-Team: fr_FR <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: src/atrace/reporter.py:12
+#: src/atrace/reporter.py:33
 msgid "line"
-msgstr "ligne"
+msgstr ""
 
-#: src/atrace/reporter.py:12
+#: src/atrace/reporter.py:33
 msgid "output"
-msgstr "affichage"
+msgstr ""
 

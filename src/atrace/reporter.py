@@ -1,11 +1,32 @@
+import configparser
 import gettext
+import os
+import pathlib
 from typing import Any, TypeAlias
 
 from tabulate import tabulate
 
 from .analyzer import UNASSIGN, History, Var
 
-t = gettext.translation("atrace", "./locale", fallback=True)
+# Make localization work in thonny:
+# Thonny does not pass environment variables to the running program,
+# so we dig out the UI language from Thonny's configuration file.
+try:
+    if not os.getenv("LANG"):
+        thonny_dir = os.environ.get("THONNY_USER_DIR")
+        if thonny_dir:
+            config_path = os.path.join(thonny_dir, "configuration.ini")
+            config = configparser.ConfigParser()
+            config.read(config_path)
+            language = config.get("general", "language")
+            if language:
+                os.environ["LANG"] = language
+except Exception:
+    pass
+
+LOCALE_DIR = pathlib.Path(__file__).parent / "locale"
+
+t = gettext.translation("atrace", str(LOCALE_DIR), fallback=True)
 _ = t.gettext
 
 

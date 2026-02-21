@@ -24,7 +24,7 @@ To run all tests:
 
     uv run python -m unittest discover
 
-To run a single test (module.file.class.method):
+To run a single test (_module.file.class.method_):
 
     uv run python -m unittest tests.test_simple.TestSimple.test_assign_then_print
 
@@ -38,27 +38,27 @@ To run a single test (module.file.class.method):
 
 ### Whenever code changes
 
-    uv run pybabel extract -o locale/atrace.pot src
+    uv run pybabel extract -o src/atrace/locale/atrace.pot src
 
-    uv run pybabel update -i locale/atrace.pot -D atrace -d locale
+    uv run pybabel update -i src/atrace/locale/atrace.pot -D atrace -d src/atrace/locale
 
 ### To add a language
 
-Here for fr_FR:
+Here for german:
 
-    uv run pybabel init -l fr_FR -i locale/atrace.pot -D atrace -d locale
+    uv run pybabel init -l de -i src/atrace/locale/atrace.pot -D atrace -d src/atrace/locale
 
 Then edit the newly created .po file
 
-### After modifying any .po file
+### After adding/modifying any .po file
 
-    uv run pybabel compile -D atrace -d locale
+    uv run pybabel compile -D atrace -d src/atrace/locale
 
 ### To verify translations
 
-Here for fr_FR:
+Here for fr:
 
-    export LANG=fr_FR
+    export LANG=fr
     uv run tests/programs/small_example.py
 
 ## Developing for Thonny
