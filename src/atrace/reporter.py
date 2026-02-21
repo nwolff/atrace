@@ -4,7 +4,9 @@ import os
 import pathlib
 from typing import Any, TypeAlias
 
-from tabulate import tabulate
+from rich import box
+from rich.console import Console
+from rich.table import Table
 
 from .analyzer import UNASSIGN, History, Var
 
@@ -32,16 +34,18 @@ _ = t.gettext
 
 LINE, OUTPUT = _("line"), _("output")
 
-Row: TypeAlias = dict[str, Any | None]
+HeaderData: TypeAlias = list[str]
+RowData: TypeAlias = list[str | None]
+TableData: TypeAlias = tuple[HeaderData, list[RowData]]
 
 
 def variable_to_column_name(var: Var) -> str:
     return var.name if var.scope == "<module>" else f"({var.scope}) {var.name}"
 
 
-def history_to_table(history: History) -> list[Row]:
+def history_to_table_data(history: History) -> TableData:
     all_variables = []
-    has_output = False
+    history_has_output = False
 
     # Prepare:
     # - Collect all variables in order of appearance.
@@ -51,15 +55,22 @@ def history_to_table(history: History) -> list[Row]:
             if variable not in all_variables:
                 all_variables.append(variable)
         if output:
-            has_output = True
+            history_has_output = True
 
-    # Time to build the table
-    table = []
+    # Build headers
+    headers = [LINE]
+    for variable in all_variables:
+        headers.append(variable_to_column_name(variable))
+    if history_has_output:
+        headers.append(OUTPUT)
+
+    # Build rows
+    rows = []
     for loc, assignments, output in history:
-        row: Row = {}
-        table.append(row)
+        row: RowData = []
+        rows.append(row)
 
-        row[LINE] = loc.line_no
+        row.append(str(loc.line_no))
 
         content: Any | None
         for variable in all_variables:
@@ -71,23 +82,33 @@ def history_to_table(history: History) -> list[Row]:
                     case _ if value is UNASSIGN:
                         content = None
                     case _:
-                        content = value
+                        content = str(value)
             else:
                 content = None
-            row[variable_to_column_name(variable)] = content
+            row.append(content)
 
-        if has_output:
-            row[OUTPUT] = output
+        if history_has_output:
+            row.append(output.strip() if output else None)
 
+    return headers, rows
+
+
+def table_data_to_table(table_data: TableData) -> Table:
+    table = Table(box=box.ROUNDED, padding=(0, 1, 0, 2))
+    headers, rows = table_data
+    for header in headers:
+        table.add_column(header, justify="right")
+    for row in rows:
+        table.add_row(*row)
     return table
 
 
 def history_to_report(history: History) -> str:
-    table = history_to_table(history)
-    return tabulate(
-        table,
-        headers="keys",
-        stralign="right",
-        disable_numparse=True,
-        tablefmt="rounded_outline",
-    )
+    table_data = history_to_table_data(history)
+    table = table_data_to_table(table_data)
+    console = Console(
+        width=80, color_system=None
+    )  # Set a fixed width to ensure consistent layout
+    with console.capture() as capture:
+        console.print(table)
+    return capture.get()
