@@ -6,6 +6,12 @@ from .analyzer import trace_to_history
 from .reporter import history_to_report
 from .tracer import DoneCallback, Trace, Tracer
 
+try:
+    from ._version import __version__  # noqa
+except ImportError:
+    # Fallback for local development if _version.py hasn't been generated yet
+    __version__ = "0.0.0.dev0"
+
 
 def get_importer_frame() -> FrameType | None:
     # Get the current call stack

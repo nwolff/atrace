@@ -3,7 +3,7 @@ name: "Test"
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: [ 'main' ]
+    branches: ["main"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -26,4 +26,4 @@ jobs:
       - name: Type check
         run: uv run mypy src tests
       - name: Run tests
-        run: uv run python -m unittest tests/test*
+        run: uv run python -m unittest discover

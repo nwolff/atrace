@@ -1,6 +1,7 @@
 # Atrace
 
-![build status](https://github.com/nwolff/atrace/actions/workflows/test.yml/badge.svg)
+[![build status](https://github.com/nwolff/atrace/actions/workflows/test.yml/badge.svg)](https://github.com/nwolff/atrace/actions)
+[![PyPI - Version](https://img.shields.io/pypi/v/atrace?color=007ec4&logo=pypi)](https://pypi.org/project/atrace/)
 
 Automatically prints a trace table of **simple programs**
 
@@ -20,18 +21,18 @@ x, y = 1, 3
 For instance running test/programs/small_example.py will print this table at the end:
 
 ```
-╭────────┬─────┬─────┬────────┬─────────────┬───────────────────┬──────────────╮
-│   line │   x │   y │ t      │ (greet) n   │ (greet) message   │ output       │
-├────────┼─────┼─────┼────────┼─────────────┼───────────────────┼──────────────┤
-│      3 │   1 │   3 │        │             │                   │              │
-│      6 │   2 │     │        │             │                   │              │
-│      6 │   3 │     │        │             │                   │              │
-│      8 │     │     │        │             │                   │ x: 3         │
-│     10 │     │     │ (1, 2) │             │                   │              │
-│     13 │     │     │        │ bob         │                   │              │
-│     14 │     │     │        │             │ bonjour bob!      │              │
-│     18 │     │     │        │             │                   │ bonjour bob! │
-╰────────┴─────┴─────┴────────┴─────────────┴───────────────────┴──────────────╯
+╭────────┬─────┬─────┬────────┬────────────────┬───────────────────┬────────────╮
+│   line │   x │   y │ t      │ (greet) name   │ (greet) message   │ output     │
+├────────┼─────┼─────┼────────┼────────────────┼───────────────────┼────────────┤
+│      3 │   1 │   3 │        │                │                   │            │
+│      6 │   2 │     │        │                │                   │            │
+│      6 │   3 │     │        │                │                   │            │
+│      8 │     │     │        │                │                   │ x: 3       │
+│     10 │     │     │ (1, 2) │                │                   │            │
+│     13 │     │     │        │ Bob            │                   │            │
+│     14 │     │     │        │                │ Hello Bob!        │            │
+│     18 │     │     │        │                │                   │ Hello Bob! │
+╰────────┴─────┴─────┴────────┴────────────────┴───────────────────┴────────────╯
 ```
 
 ## Compatibility

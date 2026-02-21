@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # So that the build tool sees the tags
       - name: Install uv
         uses: astral-sh/setup-uv@v7
       - name: Install Python 3.13
@@ -30,7 +32,7 @@ jobs:
       - name: Type check
         run: uv run mypy src tests
       - name: Run tests
-        run: uv run python -m unittest tests/test*
+        run: uv run python -m unittest discover
       - name: Build
         run: uv build
       - name: Publish

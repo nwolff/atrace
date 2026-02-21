@@ -10,9 +10,9 @@ print("x:", x)
 t = 1, 2
 
 
-def greet(n):
-    message = f"bonjour {n}!"
+def greet(name):
+    message = f"Hello {name}!"
     return message
 
 
-print(greet("bob"))
+print(greet("Bob"))
