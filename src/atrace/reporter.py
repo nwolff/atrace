@@ -84,4 +84,6 @@ def history_to_table(history: History) -> list[Row]:
 
 def history_to_report(history: History) -> str:
     table = history_to_table(history)
-    return tabulate(table, headers="keys", tablefmt="rounded_outline")
+    return tabulate(
+        table, headers="keys", disable_numparse=True, tablefmt="rounded_outline"
+    )

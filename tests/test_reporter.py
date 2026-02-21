@@ -1,7 +1,7 @@
 import textwrap
 import unittest
 
-from atrace.analyzer import UNASSIGN, Var
+from atrace.analyzer import UNASSIGN, History, Var
 from atrace.reporter import history_to_report, history_to_table
 from atrace.tracer import Loc
 
@@ -34,7 +34,7 @@ class TestReporterTables(unittest.TestCase):
         self.assertEqual(expected_table, history_to_table(history))
 
     def test_with_scopes(self):
-        history = [
+        history: History = [
             (Loc("double", 4), {Var("double", "a"): 3}, None),
             (Loc("double", 5), {Var("double", "result"): 6}, None),
             (Loc("<module>", 9), {Var("<module>", "x"): 6}, None),
@@ -48,7 +48,7 @@ class TestReporterTables(unittest.TestCase):
 
 
 class TestReporterFinalResult(unittest.TestCase):
-    def test_reporter_final_result(self):
+    def test_small_example(self):
         history = [
             (
                 Loc("<module>", 3),
@@ -76,4 +76,14 @@ class TestReporterFinalResult(unittest.TestCase):
         │     14 │     │     │        │             │ bonjour bob!      │              │
         │     18 │     │     │        │             │                   │ bonjour bob! │
         ╰────────┴─────┴─────┴────────┴─────────────┴───────────────────┴──────────────╯"""
+        self.assertEqual(textwrap.dedent(expected_result), history_to_report(history))
+
+    def test_just_print_a_number(self):
+        history: History = [(Loc("<module>", 1), {}, "1\n")]
+        expected_result = """\
+        ╭────────┬──────────╮
+        │ line   │ output   │
+        ├────────┼──────────┤
+        │ 1      │ 1        │
+        ╰────────┴──────────╯"""
         self.assertEqual(textwrap.dedent(expected_result), history_to_report(history))
