@@ -2,8 +2,8 @@ import unittest
 from unittest import mock
 
 import atrace
-from atrace.analyzer import UNASSIGN, Var, trace_to_history
-from atrace.tracer import Call, ExceptionOccured, Line, Loc, Output, Return
+from atrace.core.analyzer import UNASSIGN, Var, trace_to_history
+from atrace.core.tracer import Call, ExceptionOccurred, Line, Loc, Output, Return
 
 
 class TestAbruptTermination(unittest.TestCase):
@@ -23,10 +23,13 @@ class TestAbruptTermination(unittest.TestCase):
             (Loc("<module>", 6), Line({"x": 1}, {})),
             (
                 Loc("<module>", 6),
-                ExceptionOccured({"x": 1}, {}, NameError, mock.ANY, mock.ANY),
+                ExceptionOccurred({"x": 1}, {}, NameError, mock.ANY, mock.ANY),
             ),
             (Loc("<module>", 6), Return({"x": 1}, {}, None)),
         ]
+        from pprint import pprint
+
+        pprint(self.trace)  # XXX
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [(Loc("<module>", 4), {Var("<module>", "x"): 1}, None)]
@@ -56,7 +59,7 @@ class TestAbruptTermination(unittest.TestCase):
             (Loc("<module>", 4), Line({}, {})),
             (
                 Loc("<module>", 4),
-                ExceptionOccured({}, {}, Exception, mock.ANY, mock.ANY),
+                ExceptionOccurred({}, {}, Exception, mock.ANY, mock.ANY),
             ),
             (Loc("<module>", 5), Line({}, {})),
             (Loc("<module>", 6), Line({"e": mock.ANY}, {})),

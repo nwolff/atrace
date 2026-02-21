@@ -8,7 +8,7 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from .analyzer import UNASSIGN, History, Var
+from .core.analyzer import UNASSIGN, History, Var
 
 # Make localization work in thonny:
 # Thonny does not pass environment variables to the running program,
@@ -106,9 +106,7 @@ def table_data_to_table(table_data: TableData) -> Table:
 def history_to_report(history: History) -> str:
     table_data = history_to_table_data(history)
     table = table_data_to_table(table_data)
-    console = Console(
-        width=80, color_system=None
-    )  # Set a fixed width to ensure consistent layout
+    console = Console(color_system=None)
     with console.capture() as capture:
         console.print(table)
     return capture.get()

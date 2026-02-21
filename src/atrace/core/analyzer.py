@@ -56,7 +56,7 @@ def diff(scope: str, before: Symbols, after: Symbols) -> Assignments:
     return assignments
 
 
-def trace_to_unpacked_history(trace: Trace) -> UnpackedHistory:
+def _trace_to_unpacked_history(trace: Trace) -> UnpackedHistory:
     """
     Simulate the state of global and local symbols,
     in order to reconstruct a history of assignments.
@@ -98,12 +98,11 @@ def trace_to_unpacked_history(trace: Trace) -> UnpackedHistory:
     return history
 
 
-def pack_history(unpacked: UnpackedHistory) -> History:
+def _join_outputs(unpacked: UnpackedHistory) -> History:
     """
-    - Coalesce consecutive events that occur on the same line: outputs, assignments
-    - Remove history items that neither assign nor output
+    Coalesce consecutive events that occur on the same line: outputs, assignments
     """
-    coalesced = []
+    joined = []
     for loc, group in groupby(unpacked, key=itemgetter(0)):
         pending_output = None
         for _, item in group:
@@ -111,19 +110,36 @@ def pack_history(unpacked: UnpackedHistory) -> History:
                 case str(text):
                     pending_output = (pending_output or "") + text
                 case _ as assignments:
-                    coalesced.append((loc, assignments, pending_output))
+                    joined.append((loc, assignments, pending_output))
                     pending_output = None
         if pending_output:
-            coalesced.append((loc, {}, pending_output))
+            joined.append((loc, {}, pending_output))
 
-    filtered = [
+    return joined
+
+def _filter_zero_lines(unfiltered: History) -> History:
+    """ An artefact of tracing is seeing events that happen before line 1 of the program is executed """
+    return [
         (loc, assignments, output)
-        for loc, assignments, output in coalesced
+        for loc, assignments, output in unfiltered
+        if loc.line_no != 0
+    ]
+
+
+def _filter_no_effect(unfiltered:History) -> History:
+    """" Remove history items that neither assign nor output """
+    return [
+        (loc, assignments, output)
+        for loc, assignments, output in unfiltered
         if assignments or output
     ]
-    return filtered
 
 
-def trace_to_history(trace: Trace) -> History:
-    unpacked = trace_to_unpacked_history(trace)
-    return pack_history(unpacked)
+def trace_to_history(trace: Trace, keep_no_effect=False) -> History:
+    unpacked = _trace_to_unpacked_history(trace)
+    joined =  _join_outputs(unpacked)
+    cleaned = _filter_zero_lines(joined)
+    if keep_no_effect:
+        return cleaned
+    else:
+        return _filter_no_effect(cleaned)

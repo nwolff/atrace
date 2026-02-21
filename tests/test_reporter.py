@@ -1,9 +1,9 @@
 import textwrap
 import unittest
 
-from atrace.analyzer import UNASSIGN, Var
+from atrace.core.analyzer import UNASSIGN, Var
+from atrace.core.tracer import Loc
 from atrace.reporter import history_to_report, history_to_table_data
-from atrace.tracer import Loc
 
 
 class TestReporter(unittest.TestCase):

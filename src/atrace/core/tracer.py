@@ -53,7 +53,7 @@ class Return(ExecutionEvent):
 
 
 @dataclass(frozen=True)
-class ExceptionOccured(ExecutionEvent):
+class ExceptionOccurred(ExecutionEvent):
     """
     An exception has occurred
     """
@@ -72,7 +72,7 @@ class Output:
     text: str
 
 
-Event: TypeAlias = Line | Call | Return | ExceptionOccured | Output
+Event: TypeAlias = Line | Call | Return | ExceptionOccurred | Output
 
 Trace: TypeAlias = list[tuple[Loc, Event]]
 
@@ -154,9 +154,9 @@ class Tracer:
             attached_to_frame.f_trace = self.trace_vars
 
     def trace_vars(self, frame: FrameType, event: str, arg: Any):
-        if not self.filename_of_interest:
+        if self.filename_of_interest is None:
             if frame.f_code.co_name == CONAME:
-                # Until now we were lurking, finding out when to start collecting info.
+                # We were lurking until now, finding out when to start collecting info.
                 # It's time to get to work.
                 self.filename_of_interest = frame.f_code.co_filename
                 sys.stdout = OutputLogger(trace=self.trace, stdout=self.original_stdout)
@@ -187,7 +187,7 @@ class Tracer:
             case "return":
                 trace_event = Return(globals=globals, locals=locals, return_value=arg)
             case "exception":
-                trace_event = ExceptionOccured(
+                trace_event = ExceptionOccurred(
                     globals=globals,
                     locals=locals,
                     exception=arg[0],

@@ -2,9 +2,10 @@ import inspect
 import sys
 from types import FrameType
 
-from .analyzer import trace_to_history
+from .core.analyzer import trace_to_history
+from .core.tracer import DoneCallback, Trace, Tracer
+
 from .reporter import history_to_report
-from .tracer import DoneCallback, Trace, Tracer
 
 try:
     from ._version import __version__  # noqa
@@ -37,6 +38,7 @@ def dump_report(trace: Trace):
 if "unittest" not in sys.modules:
     # We want to only trace the module that imports us
     importer_frame = get_importer_frame()
+    # Luckily, when run as a tool with -m no importer frame gets found
     if importer_frame:
         # When running in thonny we need to step up one level because
         # we get imported from a backend custom_import.

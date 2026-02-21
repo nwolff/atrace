@@ -2,8 +2,8 @@ import unittest
 from unittest import mock
 
 import atrace
-from atrace.analyzer import UNASSIGN, Var, trace_to_history
-from atrace.tracer import Call, Line, Loc, Output, Return
+from atrace.core.analyzer import UNASSIGN, Var, trace_to_history
+from atrace.core.tracer import Call, Line, Loc, Output, Return
 
 
 class TestSimple(unittest.TestCase):
