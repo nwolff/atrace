@@ -2,9 +2,8 @@ import inspect
 import sys
 from types import FrameType
 
-from .core.analyzer import trace_to_history
+from .core.analyzer import trace_to_history, Filters
 from .core.tracer import DoneCallback, Trace, Tracer
-
 from .reporter import history_to_report
 
 try:
@@ -29,7 +28,9 @@ def trace_next_loaded_module(done_callback: DoneCallback):
 
 
 def dump_report(trace: Trace):
-    history = trace_to_history(trace)
+    history = trace_to_history(
+        trace, filters=Filters.FUNCTION_ASSIGNMENT | Filters.NO_EFFECT
+    )
     report = history_to_report(history)
     print()
     print(report)

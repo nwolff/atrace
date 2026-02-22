@@ -2,7 +2,7 @@ import unittest
 from unittest import mock
 
 import atrace
-from atrace.core.analyzer import UNASSIGN, Var, trace_to_history
+from atrace.core.analyzer import UNASSIGN, Var, trace_to_history, Filters
 from atrace.core.tracer import Call, ExceptionOccurred, Line, Loc, Output, Return
 
 
@@ -27,13 +27,13 @@ class TestAbruptTermination(unittest.TestCase):
             ),
             (Loc("<module>", 6), Return({"x": 1}, {}, None)),
         ]
-        from pprint import pprint
-
-        pprint(self.trace)  # XXX
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [(Loc("<module>", 4), {Var("<module>", "x"): 1}, None)]
-        self.assertEqual(expected_history, trace_to_history(self.trace))
+        self.assertEqual(
+            expected_history,
+            trace_to_history(self.trace, Filters.NO_EFFECT),
+        )
 
     def test_uncaught_exception(self):
         atrace.trace_next_loaded_module(self.callback_done)
@@ -45,7 +45,10 @@ class TestAbruptTermination(unittest.TestCase):
             (Loc("<module>", 3), {}, "hai\n"),
             (Loc("<module>", 4), {Var("<module>", "x"): 1}, None),
         ]
-        self.assertEqual(expected_history, trace_to_history(self.trace))
+        self.assertEqual(
+            expected_history,
+            trace_to_history(self.trace, Filters.NO_EFFECT),
+        )
 
     def test_caught_exception(self):
         atrace.trace_next_loaded_module(self.callback_done)
@@ -73,4 +76,7 @@ class TestAbruptTermination(unittest.TestCase):
             (Loc("<module>", 5), {Var("<module>", "e"): mock.ANY}, None),
             (Loc("<module>", 6), {Var("<module>", "e"): UNASSIGN}, "error message\n"),
         ]
-        self.assertEqual(expected_history, trace_to_history(self.trace))
+        self.assertEqual(
+            expected_history,
+            trace_to_history(self.trace, Filters.NO_EFFECT),
+        )

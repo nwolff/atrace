@@ -1,12 +1,13 @@
 import textwrap
 import unittest
+from unittest import mock
 
 from atrace.core.analyzer import UNASSIGN, Var
 from atrace.core.tracer import Loc
 from atrace.reporter import history_to_report, history_to_table_data
 
 
-class TestReporter(unittest.TestCase):
+class TestReporterFromHistory(unittest.TestCase):
     def test_all_assignments(self):
         history = [
             (Loc("<module>", 3), {Var("<module>", "x"): 1}, None),
@@ -36,15 +37,21 @@ class TestReporter(unittest.TestCase):
         )
         self.assertEqual(expected_table_data, history_to_table_data(history))
 
-    def test_with_scopes(self):
+    def test_with_functions(self):
         history = [
+            (Loc("<module>", 4), {Var("<module>", "double"): mock.ANY}, None),
             (Loc("double", 4), {Var("double", "a"): 3}, None),
             (Loc("double", 5), {Var("double", "result"): 6}, None),
             (Loc("<module>", 9), {Var("<module>", "x"): 6}, None),
         ]
         expected_table_data = (
-            ["line", "(double) a", "(double) result", "x"],
-            [["4", "3", None, None], ["5", None, "6", None], ["9", None, None, "6"]],
+            ["line", "double", "(double) a", "(double) result", "x"],
+            [
+                ["4", mock.ANY, None, None, None],
+                ["4", None, "3", None, None],
+                ["5", None, None, "6", None],
+                ["9", None, None, None, "6"],
+            ],
         )
         self.assertEqual(expected_table_data, history_to_table_data(history))
 

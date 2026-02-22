@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import IntFlag, auto
 from itertools import groupby
 from operator import itemgetter
 from typing import Any, TypeAlias
@@ -38,7 +39,7 @@ History: TypeAlias = list[tuple[Loc, Assignments, str | None]]
 @dataclass
 class Activation:
     locals: Symbols
-    last_loc: Loc
+    loc_awaiting_assignments: Loc | None
 
 
 def diff(scope: str, before: Symbols, after: Symbols) -> Assignments:
@@ -72,7 +73,7 @@ def _trace_to_unpacked_history(trace: Trace) -> UnpackedHistory:
     for loc, event in trace:
         match event:
             case Call(_, locals):
-                activations.append(Activation(locals, loc))
+                activations.append(Activation(locals, None))
                 # Capture the function bindings,
                 local_assignments = diff(loc.function_name, {}, locals)
                 history.append((loc, local_assignments))
@@ -83,12 +84,13 @@ def _trace_to_unpacked_history(trace: Trace) -> UnpackedHistory:
                 global_assignments = diff("<module>", current_globals, globals)
                 assignments = local_assignments | global_assignments
 
-                history.append((activation.last_loc, assignments))
+                if activation.loc_awaiting_assignments:
+                    history.append((activation.loc_awaiting_assignments, assignments))
 
                 activation.locals = locals
                 current_globals = globals
                 if isinstance(event, Line):
-                    activation.last_loc = loc
+                    activation.loc_awaiting_assignments = loc
                 elif isinstance(event, Return):
                     activations.pop()
 
@@ -103,7 +105,7 @@ def _join_outputs(unpacked: UnpackedHistory) -> History:
     Coalesce consecutive events that occur on the same line: outputs, assignments
     """
     joined = []
-    for loc, group in groupby(unpacked, key=itemgetter(0)):
+    for loc, group in groupby(unpacked, key=itemgetter(0)):  # Group by loc
         pending_output = None
         for _, item in group:
             match item:
@@ -117,29 +119,52 @@ def _join_outputs(unpacked: UnpackedHistory) -> History:
 
     return joined
 
-def _filter_zero_lines(unfiltered: History) -> History:
-    """ An artefact of tracing is seeing events that happen before line 1 of the program is executed """
+
+def _filter_zero_lines(history: History) -> History:
+    """An artifact of tracing is seeing events that happen before line 1 of the program is executed"""
     return [
         (loc, assignments, output)
-        for loc, assignments, output in unfiltered
+        for loc, assignments, output in history
         if loc.line_no != 0
     ]
 
 
-def _filter_no_effect(unfiltered:History) -> History:
-    """" Remove history items that neither assign nor output """
+def _filter_no_effect(history: History) -> History:
+    """ " Remove history items that neither assign nor output"""
     return [
         (loc, assignments, output)
-        for loc, assignments, output in unfiltered
+        for loc, assignments, output in history
         if assignments or output
     ]
 
 
-def trace_to_history(trace: Trace, keep_no_effect=False) -> History:
+def remove_functions(assignments: Assignments):
+    return {var: val for var, val in assignments.items() if not callable(val)}
+
+
+def _filter_function_assignment(history: History) -> History:
+    return [
+        (loc, remove_functions(assignments), output)
+        for loc, assignments, output in history
+    ]
+
+
+class Filters(IntFlag):
+    NONE = 0
+    NO_EFFECT = auto()
+    FUNCTION_ASSIGNMENT = auto()
+
+
+def trace_to_history(trace: Trace, filters: Filters) -> History:
     unpacked = _trace_to_unpacked_history(trace)
-    joined =  _join_outputs(unpacked)
-    cleaned = _filter_zero_lines(joined)
-    if keep_no_effect:
-        return cleaned
-    else:
-        return _filter_no_effect(cleaned)
+    joined = _join_outputs(unpacked)
+    result = _filter_zero_lines(joined)
+
+    if Filters.FUNCTION_ASSIGNMENT & filters:
+        result = _filter_function_assignment(result)
+
+    # This must come last.
+    if Filters.NO_EFFECT & filters:
+        result = _filter_no_effect(result)
+
+    return result

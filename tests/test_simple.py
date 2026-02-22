@@ -2,7 +2,7 @@ import unittest
 from unittest import mock
 
 import atrace
-from atrace.core.analyzer import UNASSIGN, Var, trace_to_history
+from atrace.core.analyzer import UNASSIGN, Var, trace_to_history, Filters
 from atrace.core.tracer import Call, Line, Loc, Output, Return
 
 
@@ -27,7 +27,10 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = []
-        self.assertEqual(expected_history, trace_to_history(self.trace))
+        self.assertEqual(
+            expected_history,
+            trace_to_history(self.trace, Filters.NO_EFFECT),
+        )
 
     def test_single_assignment(self):
         atrace.trace_next_loaded_module(self.callback_done)
@@ -45,7 +48,10 @@ class TestSimple(unittest.TestCase):
         expected_history = [
             (Loc("<module>", 3), {Var("<module>", "x"): 1}, None),
         ]
-        self.assertEqual(expected_history, trace_to_history(self.trace))
+        self.assertEqual(
+            expected_history,
+            trace_to_history(self.trace, Filters.NO_EFFECT),
+        )
 
     def test_assign_none_unassign(self):
         atrace.trace_next_loaded_module(self.callback_done)
@@ -68,7 +74,10 @@ class TestSimple(unittest.TestCase):
             (Loc("<module>", 5), {Var("<module>", "x"): UNASSIGN}, None),
             (Loc("<module>", 6), {Var("<module>", "x"): 2}, None),
         ]
-        self.assertEqual(expected_history, trace_to_history(self.trace))
+        self.assertEqual(
+            expected_history,
+            trace_to_history(self.trace, Filters.NO_EFFECT),
+        )
 
     def test_parallel_assignment(self):
         atrace.trace_next_loaded_module(self.callback_done)
@@ -90,7 +99,10 @@ class TestSimple(unittest.TestCase):
                 None,
             ),
         ]
-        self.assertEqual(expected_history, trace_to_history(self.trace))
+        self.assertEqual(
+            expected_history,
+            trace_to_history(self.trace, Filters.NO_EFFECT),
+        )
 
     def test_print(self):
         atrace.trace_next_loaded_module(self.callback_done)
@@ -109,7 +121,10 @@ class TestSimple(unittest.TestCase):
         expected_history = [
             (Loc("<module>", 3), {}, "hello\n"),
         ]
-        self.assertEqual(expected_history, trace_to_history(self.trace))
+        self.assertEqual(
+            expected_history,
+            trace_to_history(self.trace, Filters.NO_EFFECT),
+        )
 
     def test_assign_then_print(self):
         atrace.trace_next_loaded_module(self.callback_done)
@@ -130,7 +145,10 @@ class TestSimple(unittest.TestCase):
             (Loc("<module>", 3), {Var("<module>", "x"): 1}, None),
             (Loc("<module>", 4), {}, "1\n"),
         ]
-        self.assertEqual(expected_history, trace_to_history(self.trace))
+        self.assertEqual(
+            expected_history,
+            trace_to_history(self.trace, Filters.NO_EFFECT),
+        )
 
     def test_input(self):
         atrace.trace_next_loaded_module(self.callback_done)
@@ -155,7 +173,10 @@ class TestSimple(unittest.TestCase):
             (Loc("<module>", 3), {Var("<module>", "x"): "Bob"}, None),
             (Loc("<module>", 4), {}, "hello Bob\n"),
         ]
-        self.assertEqual(expected_history, trace_to_history(self.trace))
+        self.assertEqual(
+            expected_history,
+            trace_to_history(self.trace, Filters.NO_EFFECT),
+        )
 
     def test_while_loop(self):
         atrace.trace_next_loaded_module(self.callback_done)
@@ -180,7 +201,10 @@ class TestSimple(unittest.TestCase):
             (Loc("<module>", 5), {Var("<module>", "x"): 1}, None),
             (Loc("<module>", 5), {Var("<module>", "x"): 2}, None),
         ]
-        self.assertEqual(expected_history, trace_to_history(self.trace))
+        self.assertEqual(
+            expected_history,
+            trace_to_history(self.trace, Filters.NO_EFFECT),
+        )
 
     def test_for_with_print(self):
         atrace.trace_next_loaded_module(self.callback_done)
@@ -215,7 +239,10 @@ class TestSimple(unittest.TestCase):
             (Loc("<module>", 3), {Var("<module>", "i"): 2}, None),
             (Loc("<module>", 4), {}, "2\n"),
         ]
-        self.assertEqual(expected_history, trace_to_history(self.trace))
+        self.assertEqual(
+            expected_history,
+            trace_to_history(self.trace, Filters.NO_EFFECT),
+        )
 
     def test_loop_with_mutation_and_print(self):
         atrace.trace_next_loaded_module(self.callback_done)
@@ -244,7 +271,10 @@ class TestSimple(unittest.TestCase):
             (Loc("<module>", 5), {Var("<module>", "lst"): ["b"]}, "a\n"),
             (Loc("<module>", 5), {Var("<module>", "lst"): []}, "b\n"),
         ]
-        self.assertEqual(expected_history, trace_to_history(self.trace))
+        self.assertEqual(
+            expected_history,
+            trace_to_history(self.trace, Filters.NO_EFFECT),
+        )
 
     def test_list_comprehension(self):
         atrace.trace_next_loaded_module(self.callback_done)
@@ -277,7 +307,10 @@ class TestSimple(unittest.TestCase):
                 None,
             ),
         ]
-        self.assertEqual(expected_history, trace_to_history(self.trace))
+        self.assertEqual(
+            expected_history,
+            trace_to_history(self.trace, Filters.NO_EFFECT),
+        )
 
     def test_import(self):
         atrace.trace_next_loaded_module(self.callback_done)
@@ -299,4 +332,7 @@ class TestSimple(unittest.TestCase):
         expected_history = [
             (Loc("<module>", 6), {}, "3.141592653589793\n"),
         ]
-        self.assertEqual(expected_history, trace_to_history(self.trace))
+        self.assertEqual(
+            expected_history,
+            trace_to_history(self.trace, Filters.NO_EFFECT),
+        )

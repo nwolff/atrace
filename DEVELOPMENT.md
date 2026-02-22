@@ -1,3 +1,15 @@
+## TODO
+
+- Describe the -m tools in the README.md
+
+## IDEAS
+
+- Animated trace
+- Interactive trace, selecting a line shows the local history of variables
+- Nested boxes for activations
+- Histogram exponential axis (when automatically detected or on demand)
+- ...
+
 ## Running example programs
 
 With cpython:
@@ -8,9 +20,13 @@ With pypy:
 
     uv run --python pypy tests/programs/small_example.py
 
+## Code formating
+
+    uv run ruff format
+
 ## Linting
 
-    uv run ruff check src tests
+    uv run ruff check src tests --fix
 
 ## Type Checking
 

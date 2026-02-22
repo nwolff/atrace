@@ -103,9 +103,13 @@ def table_data_to_table(table_data: TableData) -> Table:
     return table
 
 
-def history_to_report(history: History) -> str:
+def history_to_table(history: History) -> Table:
     table_data = history_to_table_data(history)
-    table = table_data_to_table(table_data)
+    return table_data_to_table(table_data)
+
+
+def history_to_report(history: History) -> str:
+    table = history_to_table(history)
     console = Console(color_system=None)
     with console.capture() as capture:
         console.print(table)

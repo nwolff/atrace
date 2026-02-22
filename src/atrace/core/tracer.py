@@ -80,7 +80,7 @@ DoneCallback = Callable[[Trace], None]
 
 
 def ignore_variable(name: str, value: Any) -> bool:
-    return name.startswith("__") or callable(value) or isinstance(value, ModuleType)
+    return name.startswith("__") or isinstance(value, ModuleType)
 
 
 def filtered_variables(variables: dict[str, Any]) -> dict[str, Any]:
