@@ -1,4 +1,4 @@
-print("hello")
+import atrace  # noqa
 
 
 def is_zero(x):

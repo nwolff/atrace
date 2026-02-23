@@ -1,9 +1,17 @@
 import unittest
 from unittest import mock
 
-import atrace
-from atrace.core.analyzer import Filters, Var, trace_to_history
-from atrace.core.tracer import Call, Line, Loc, Output, Return
+from atrace import (
+    Call,
+    Filters,
+    Line,
+    Loc,
+    Output,
+    Return,
+    Var,
+    trace_next_loaded_module,
+    trace_to_history,
+)
 
 
 class TestFunctions(unittest.TestCase):
@@ -11,7 +19,7 @@ class TestFunctions(unittest.TestCase):
         self.trace = trace
 
     def test_function(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
         from .programs import function  # noqa
 
         expected_trace = [
@@ -54,7 +62,7 @@ class TestFunctions(unittest.TestCase):
         )
 
     def test_function_assign_before_call(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
         from .programs import function_assign_before_call  # noqa
 
         expected_trace = [
@@ -82,7 +90,7 @@ class TestFunctions(unittest.TestCase):
         )
 
     def test_function_modifying_global(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
         from .programs import function_modifying_global  # noqa
 
         expected_trace = [
@@ -112,7 +120,7 @@ class TestFunctions(unittest.TestCase):
         )
 
     def test_function_shadowing_global(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
         from .programs import function_shadowing_global  # noqa
 
         expected_trace = [
@@ -151,7 +159,7 @@ class TestFunctions(unittest.TestCase):
         )
 
     def test_function_with_recursion(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
         from .programs import function_with_recursion  # noqa
 
         expected_trace = [
@@ -189,10 +197,10 @@ class TestFunctions(unittest.TestCase):
 
     def test_function_nested(self):
         """
-        Maybe the surprising thing is that when we access y from inner, y appears in our scope.
+        Maybe the surprising thing is when we access y from inner, y appears in scope.
         This is how the python runtime works.
         """
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
         from .programs import function_nested  # noqa
 
         expected_trace = [
@@ -237,7 +245,7 @@ class TestFunctions(unittest.TestCase):
         )
 
     def test_function_in_variable(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
         from .programs import function_in_variable  # noqa
 
         expected_trace = [
@@ -272,7 +280,7 @@ class TestFunctions(unittest.TestCase):
         )
 
     def test_function_lambda(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
         from .programs import function_lambda  # noqa
 
         expected_history = [
@@ -293,7 +301,7 @@ class TestFunctions(unittest.TestCase):
         Kind of works, except one sees one too many variable assignment in the generator
         when we re-enter the generator.
         """
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
         from .programs import function_generator  # noqa
 
         expected_history = [

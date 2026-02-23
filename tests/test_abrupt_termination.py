@@ -1,9 +1,19 @@
 import unittest
 from unittest import mock
 
-import atrace
-from atrace.core.analyzer import UNASSIGN, Var, trace_to_history, Filters
-from atrace.core.tracer import Call, ExceptionOccurred, Line, Loc, Output, Return
+from atrace import (
+    UNASSIGN,
+    Call,
+    ExceptionOccurred,
+    Filters,
+    Line,
+    Loc,
+    Output,
+    Return,
+    Var,
+    trace_next_loaded_module,
+    trace_to_history,
+)
 
 
 class TestAbruptTermination(unittest.TestCase):
@@ -11,7 +21,7 @@ class TestAbruptTermination(unittest.TestCase):
         self.trace = trace
 
     def test_syntax_error(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
 
         with self.assertRaises(Exception):
             from .programs import syntax_error  # noqa
@@ -23,7 +33,7 @@ class TestAbruptTermination(unittest.TestCase):
             (Loc("<module>", 6), Line({"x": 1}, {})),
             (
                 Loc("<module>", 6),
-                ExceptionOccurred({"x": 1}, {}, NameError, mock.ANY, mock.ANY),
+                ExceptionOccurred({"x": 1}, {}, mock.ANY, mock.ANY, mock.ANY),
             ),
             (Loc("<module>", 6), Return({"x": 1}, {}, None)),
         ]
@@ -36,7 +46,7 @@ class TestAbruptTermination(unittest.TestCase):
         )
 
     def test_uncaught_exception(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
 
         with self.assertRaises(Exception):
             from .programs import uncaught_exception  # noqa
@@ -51,7 +61,7 @@ class TestAbruptTermination(unittest.TestCase):
         )
 
     def test_caught_exception(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
 
         from .programs import caught_exception  # noqa
 
@@ -62,7 +72,7 @@ class TestAbruptTermination(unittest.TestCase):
             (Loc("<module>", 4), Line({}, {})),
             (
                 Loc("<module>", 4),
-                ExceptionOccurred({}, {}, Exception, mock.ANY, mock.ANY),
+                ExceptionOccurred({}, {}, mock.ANY, mock.ANY, mock.ANY),
             ),
             (Loc("<module>", 5), Line({}, {})),
             (Loc("<module>", 6), Line({"e": mock.ANY}, {})),

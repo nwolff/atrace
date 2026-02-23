@@ -1,9 +1,19 @@
 import unittest
-from unittest import mock
+from unittest.mock import patch
 
-import atrace
-from atrace.core.analyzer import UNASSIGN, Var, trace_to_history, Filters
-from atrace.core.tracer import Call, Line, Loc, Output, Return
+from atrace import (
+    UNASSIGN,
+    Call,
+    Filters,
+    History,
+    Line,
+    Loc,
+    Output,
+    Return,
+    Var,
+    trace_next_loaded_module,
+    trace_to_history,
+)
 
 
 class TestSimple(unittest.TestCase):
@@ -15,7 +25,7 @@ class TestSimple(unittest.TestCase):
         self.trace = trace
 
     def test_empty(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
 
         from .programs import empty  # noqa
 
@@ -26,14 +36,14 @@ class TestSimple(unittest.TestCase):
         ]
         self.assertEqual(expected_trace, self.trace)
 
-        expected_history = []
+        expected_history: History = []
         self.assertEqual(
             expected_history,
             trace_to_history(self.trace, Filters.NO_EFFECT),
         )
 
     def test_single_assignment(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
         from .programs import single_assignment  # noqa
 
         expected_trace = [
@@ -54,7 +64,7 @@ class TestSimple(unittest.TestCase):
         )
 
     def test_assign_none_unassign(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
         from .programs import assign_none_unassign  # noqa
 
         expected_trace = [
@@ -80,7 +90,7 @@ class TestSimple(unittest.TestCase):
         )
 
     def test_parallel_assignment(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
 
         from .programs import parallel_assignment  # noqa
 
@@ -105,7 +115,7 @@ class TestSimple(unittest.TestCase):
         )
 
     def test_print(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
         from .programs import print as _print  # noqa
 
         expected_trace = [
@@ -118,7 +128,7 @@ class TestSimple(unittest.TestCase):
         ]
         self.assertEqual(expected_trace, self.trace)
 
-        expected_history = [
+        expected_history: History = [
             (Loc("<module>", 3), {}, "hello\n"),
         ]
         self.assertEqual(
@@ -127,7 +137,7 @@ class TestSimple(unittest.TestCase):
         )
 
     def test_assign_then_print(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
         from .programs import assign_then_print  # noqa
 
         expected_trace = [
@@ -151,10 +161,9 @@ class TestSimple(unittest.TestCase):
         )
 
     def test_input(self):
-        atrace.trace_next_loaded_module(self.callback_done)
-        mock.builtins.input = lambda _: "Bob"
-
-        from .programs import input  # noqa
+        trace_next_loaded_module(self.callback_done)
+        with patch("builtins.input", return_value="Bob"):
+            from .programs import input  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -179,7 +188,7 @@ class TestSimple(unittest.TestCase):
         )
 
     def test_while_loop(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
 
         from .programs import while_loop  # noqa
 
@@ -207,7 +216,7 @@ class TestSimple(unittest.TestCase):
         )
 
     def test_for_with_print(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
 
         from .programs import for_with_print  # noqa
 
@@ -245,7 +254,7 @@ class TestSimple(unittest.TestCase):
         )
 
     def test_loop_with_mutation_and_print(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
 
         from .programs import loop_with_mutation_and_print  # noqa
 
@@ -277,7 +286,7 @@ class TestSimple(unittest.TestCase):
         )
 
     def test_list_comprehension(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
 
         from .programs import list_comprehension  # noqa
 
@@ -313,7 +322,7 @@ class TestSimple(unittest.TestCase):
         )
 
     def test_import(self):
-        atrace.trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.callback_done)
 
         from .programs import importing  # noqa
 
@@ -329,7 +338,7 @@ class TestSimple(unittest.TestCase):
         ]
         self.assertEqual(expected_trace, self.trace)
 
-        expected_history = [
+        expected_history: History = [
             (Loc("<module>", 6), {}, "3.141592653589793\n"),
         ]
         self.assertEqual(

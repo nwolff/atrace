@@ -20,21 +20,22 @@ With pypy:
 
     uv run --python pypy tests/programs/small_example.py
 
-## Code formating
+## Type Checking
 
-    uv run ruff format
+    uv run mypy src tests
 
 ## Linting
 
     uv run ruff check src tests --fix
 
-## Type Checking
+## Code formating
 
-    uv run mypy src tests
+    uv run ruff format
 
 ## Running unit tests
 
-We use unittest instead of pytest, because pytest's heavy instrumentation of the code causes trouble.
+We use unittest instead of pytest, because pytest's heavy instrumentation of the code
+causes trouble.
 
 To run all tests:
 

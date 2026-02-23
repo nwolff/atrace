@@ -2,14 +2,23 @@ import textwrap
 import unittest
 from unittest import mock
 
-from atrace.core.analyzer import UNASSIGN, Var
-from atrace.core.tracer import Loc
-from atrace.reporter import history_to_report, history_to_table_data
+from rich.console import Console
+
+from atrace import UNASSIGN, History, Loc, Var
+from atrace.reporter import history_to_table, history_to_table_data
+
+
+def capture_report(history: History) -> str:
+    table = history_to_table(history)
+    console = Console(color_system=None)
+    with console.capture() as capture:
+        console.print(table)
+    return capture.get()
 
 
 class TestReporterFromHistory(unittest.TestCase):
     def test_all_assignments(self):
-        history = [
+        history: History = [
             (Loc("<module>", 3), {Var("<module>", "x"): 1}, None),
             (Loc("<module>", 4), {Var("<module>", "x"): None}, None),
             (Loc("<module>", 5), {Var("<module>", "x"): UNASSIGN}, None),
@@ -38,7 +47,7 @@ class TestReporterFromHistory(unittest.TestCase):
         self.assertEqual(expected_table_data, history_to_table_data(history))
 
     def test_with_functions(self):
-        history = [
+        history: History = [
             (Loc("<module>", 4), {Var("<module>", "double"): mock.ANY}, None),
             (Loc("double", 4), {Var("double", "a"): 3}, None),
             (Loc("double", 5), {Var("double", "result"): 6}, None),
@@ -56,7 +65,7 @@ class TestReporterFromHistory(unittest.TestCase):
         self.assertEqual(expected_table_data, history_to_table_data(history))
 
     def test_display(self):
-        history = [
+        history: History = [
             (
                 Loc("<module>", 3),
                 {Var("<module>", "x"): 1, Var("<module>", "y"): 3},
@@ -84,4 +93,4 @@ class TestReporterFromHistory(unittest.TestCase):
         │    18 │    │    │         │               │                  │  Hello Bob! │
         ╰───────┴────┴────┴─────────┴───────────────┴──────────────────┴─────────────╯
         """
-        self.assertEqual(textwrap.dedent(expected_result), history_to_report(history))
+        self.assertEqual(textwrap.dedent(expected_result), capture_report(history))

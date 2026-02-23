@@ -2,35 +2,33 @@ import configparser
 import gettext
 import os
 import pathlib
+from contextlib import suppress
 from typing import Any, TypeAlias
 
 from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from .core.analyzer import UNASSIGN, History, Var
+from . import UNASSIGN, History, Var
 
 # Make localization work in thonny:
 # Thonny does not pass environment variables to the running program,
 # so we dig out the UI language from Thonny's configuration file.
-try:
+with suppress(OSError, configparser.Error):
     if not os.getenv("LANG"):
         thonny_dir = os.environ.get("THONNY_USER_DIR")
         if thonny_dir:
             config_path = os.path.join(thonny_dir, "configuration.ini")
             config = configparser.ConfigParser()
             config.read(config_path)
-            language = config.get("general", "language")
+            language = config.get("general", "language", fallback=None)
             if language:
                 os.environ["LANG"] = language
-except Exception:
-    pass
 
 LOCALE_DIR = pathlib.Path(__file__).parent / "locale"
 
 t = gettext.translation("atrace", str(LOCALE_DIR), fallback=True)
 _ = t.gettext
-
 
 LINE, OUTPUT = _("line"), _("output")
 
@@ -94,7 +92,7 @@ def history_to_table_data(history: History) -> TableData:
 
 
 def table_data_to_table(table_data: TableData) -> Table:
-    table = Table(box=box.ROUNDED, padding=(0, 1, 0, 2))
+    table = Table(box=box.ROUNDED, padding=(0, 1, 0, 2), header_style="none")
     headers, rows = table_data
     for header in headers:
         table.add_column(header, justify="right")
@@ -108,9 +106,7 @@ def history_to_table(history: History) -> Table:
     return table_data_to_table(table_data)
 
 
-def history_to_report(history: History) -> str:
+def print_history(history: History) -> None:
     table = history_to_table(history)
-    console = Console(color_system=None)
-    with console.capture() as capture:
-        console.print(table)
-    return capture.get()
+    console = Console()
+    console.print(table)
