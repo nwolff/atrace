@@ -7,7 +7,7 @@ while x < y:
 
 print("x:", x)
 
-t = 1, 2
+t = 1, "a"
 
 
 def greet(name):

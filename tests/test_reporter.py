@@ -22,7 +22,7 @@ class TestReporterFromHistory(unittest.TestCase):
             (Loc("<module>", 3), {Var("<module>", "x"): 1}, None),
             (Loc("<module>", 4), {Var("<module>", "x"): None}, None),
             (Loc("<module>", 5), {Var("<module>", "x"): UNASSIGN}, None),
-            (Loc("<module>", 6), {Var("<module>", "x"): 2}, None),
+            (Loc("<module>", 6), {Var("<module>", "x"): "bob"}, None),
         ]
         expected_table_data = (
             ["line", "x"],
@@ -30,7 +30,7 @@ class TestReporterFromHistory(unittest.TestCase):
                 ["3", "1"],
                 ["4", "None"],
                 ["5", None],
-                ["6", "2"],
+                ["6", '"bob"'],
             ],
         )
         self.assertEqual(expected_table_data, history_to_table_data(history))
@@ -74,23 +74,23 @@ class TestReporterFromHistory(unittest.TestCase):
             (Loc("<module>", 6), {Var("<module>", "x"): 2}, None),
             (Loc("<module>", 6), {Var("<module>", "x"): 3}, None),
             (Loc("<module>", 8), {}, "x: 3\n"),
-            (Loc("<module>", 10), {Var("<module>", "t"): (1, 2)}, None),
+            (Loc("<module>", 10), {Var("<module>", "t"): (1, "a")}, None),
             (Loc("greet", 13), {Var("greet", "name"): "Bob"}, None),
             (Loc("greet", 14), {Var("greet", "message"): "Hello Bob!"}, None),
             (Loc("<module>", 18), {}, "Hello Bob!\n"),
         ]
         expected_result = """\
-        ╭───────┬────┬────┬─────────┬───────────────┬──────────────────┬─────────────╮
-        │  line │  x │  y │       t │  (greet) name │  (greet) message │      output │
-        ├───────┼────┼────┼─────────┼───────────────┼──────────────────┼─────────────┤
-        │     3 │  1 │  3 │         │               │                  │             │
-        │     6 │  2 │    │         │               │                  │             │
-        │     6 │  3 │    │         │               │                  │             │
-        │     8 │    │    │         │               │                  │        x: 3 │
-        │    10 │    │    │  (1, 2) │               │                  │             │
-        │    13 │    │    │         │           Bob │                  │             │
-        │    14 │    │    │         │               │       Hello Bob! │             │
-        │    18 │    │    │         │               │                  │  Hello Bob! │
-        ╰───────┴────┴────┴─────────┴───────────────┴──────────────────┴─────────────╯
+        ╭───────┬────┬────┬───────────┬───────────────┬──────────────────┬─────────────╮
+        │  line │  x │  y │         t │  (greet) name │  (greet) message │      output │
+        ├───────┼────┼────┼───────────┼───────────────┼──────────────────┼─────────────┤
+        │     3 │  1 │  3 │           │               │                  │             │
+        │     6 │  2 │    │           │               │                  │             │
+        │     6 │  3 │    │           │               │                  │             │
+        │     8 │    │    │           │               │                  │        x: 3 │
+        │    10 │    │    │  (1, "a") │               │                  │             │
+        │    13 │    │    │           │         "Bob" │                  │             │
+        │    14 │    │    │           │               │     "Hello Bob!" │             │
+        │    18 │    │    │           │               │                  │  Hello Bob! │
+        ╰───────┴────┴────┴───────────┴───────────────┴──────────────────┴─────────────╯
         """
         self.assertEqual(textwrap.dedent(expected_result), capture_report(history))

@@ -74,7 +74,7 @@ class TestSimple(unittest.TestCase):
             (Loc("<module>", 4), Line({"x": 1}, {})),
             (Loc("<module>", 5), Line({"x": None}, {})),
             (Loc("<module>", 6), Line({}, {})),
-            (Loc("<module>", 6), Return({"x": 2}, {}, None)),
+            (Loc("<module>", 6), Return({"x": "bob"}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
@@ -82,7 +82,7 @@ class TestSimple(unittest.TestCase):
             (Loc("<module>", 3), {Var("<module>", "x"): 1}, None),
             (Loc("<module>", 4), {Var("<module>", "x"): None}, None),
             (Loc("<module>", 5), {Var("<module>", "x"): UNASSIGN}, None),
-            (Loc("<module>", 6), {Var("<module>", "x"): 2}, None),
+            (Loc("<module>", 6), {Var("<module>", "x"): "bob"}, None),
         ]
         self.assertEqual(
             expected_history,

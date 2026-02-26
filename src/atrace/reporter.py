@@ -2,6 +2,7 @@ import configparser
 import gettext
 import os
 import pathlib
+import re
 from contextlib import suppress
 from typing import Any, TypeAlias
 
@@ -39,6 +40,16 @@ TableData: TypeAlias = tuple[HeaderData, list[RowData]]
 
 def variable_to_column_name(var: Var) -> str:
     return var.name if var.scope == "<module>" else f"({var.scope}) {var.name}"
+
+
+def human_double_quote(data):
+    text = repr(data)
+    # Replace ' if it's at the start/end of a string
+    # OR next to structural chars , [ ] ( ) { } :
+    # Pattern Matches ' only if it's NOT surrounded by
+    # alphanumeric characters on both sides
+    pattern = r"(?<!\w)'|'(?!\w)"
+    return re.sub(pattern, '"', text)
 
 
 def history_to_table_data(history: History) -> TableData:
@@ -80,7 +91,7 @@ def history_to_table_data(history: History) -> TableData:
                     case _ if value is UNASSIGN:
                         content = None
                     case _:
-                        content = str(value)
+                        content = human_double_quote(value)
             else:
                 content = None
             row.append(content)
