@@ -2,6 +2,7 @@
 
 [![build status](https://github.com/nwolff/atrace/actions/workflows/test.yml/badge.svg)](https://github.com/nwolff/atrace/actions)
 [![PyPI - Version](https://img.shields.io/pypi/v/atrace?color=007ec4&logo=pypi)](https://pypi.org/project/atrace/)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/nwolff/atrace)
 
 Automatically prints a trace table of **simple programs**
 
