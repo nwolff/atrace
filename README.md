@@ -8,18 +8,7 @@ Automatically prints a trace table of **simple programs**
 
 This module is intended for beginner programmers.
 
-## Usage
-
-Just import the module:
-
-```
-import atrace  # noqa
-
-x, y = 1, 3
-...
-```
-
-For instance running test/programs/small_example.py will print this table at the end:
+The trace table of test/programs/small_example.py is:
 
 ```
 ╭───────┬────┬────┬─────────┬───────────────┬──────────────────┬─────────────╮
@@ -35,6 +24,37 @@ For instance running test/programs/small_example.py will print this table at the
 │    18 │    │    │         │               │                  │  Hello Bob! │
 ╰───────┴────┴────┴─────────┴───────────────┴──────────────────┴─────────────╯
 ```
+
+## Generating a trace for code under development
+
+Just import the module at the top of your file:
+
+```
+import atrace  # noqa
+
+x, y = 1, 3
+...
+```
+
+Every time you run the program the trace table will be printed when the program exits.
+The trace is printed even if the program is interrupted or an uncaught exception is
+raised.
+
+## Generating different views and animations of the program run
+
+You don't need to import atrace in the programs if you run the tool like this.
+
+To display the trace for a program :
+
+    uv run -m atrace tests/programs/small_example.py
+
+To display a histogram of how many times lines are executed in a program :
+
+    uv run -m atrace.histogram tests/programs/histogram_example.py
+
+To display a line by line animation of the histogram :
+
+    uv run -m atrace.animated_histogram tests/programs/fizzbuzz_example.py 
 
 ## Compatibility
 

@@ -1,14 +1,13 @@
 import argparse
 
-from rich.console import Console
-
 from . import Filters, Trace, trace_code, trace_to_history
-from .reporter import history_to_table
+from .histogram import generate_code_and_histogram_display
+from .tool_support import add_line_numbers, animate
 
 
 def run():
     parser = argparse.ArgumentParser(
-        description="Displays the trace table of the given program"
+        description="Displays the line histogram of the given program."
     )
     parser.add_argument("program", help="The path to a python file")
     options = parser.parse_args()
@@ -17,13 +16,9 @@ def run():
         source = content_file.read()
 
     def on_trace(trace: Trace) -> None:
-        history = trace_to_history(
-            trace, Filters.FUNCTION_ASSIGNMENT | Filters.NO_EFFECT
-        )
-        console = Console()
-        console.print()
-        console.print(history_to_table(history))
-        console.print()
+        numbered_lines = add_line_numbers(source)
+        history = trace_to_history(trace, filters=Filters.NONE)
+        animate(numbered_lines, history, generate_code_and_histogram_display)
 
     trace_code(source, on_trace)
 

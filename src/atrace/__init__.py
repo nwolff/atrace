@@ -12,8 +12,8 @@ from typing import Any, TextIO, TypeAlias
 """
 Everything regarding:
 - The tracing itself
-- The interpretation of the trace
-- The automatic start of tracing when one imports the module
+- The interpretation of the trace (generating a History)
+- The manual and automatic start of tracing
 
 The basic mechanism of python tracing is explained here:
     https://docs.python.org/3/library/sys.html#sys.settrace
@@ -27,7 +27,9 @@ except ImportError:
 
 
 """
-1. TRACING
+###############################################################################
+# TRACING
+###############################################################################
 
 The models and classes that collect the trace.
 """
@@ -246,7 +248,9 @@ class Tracer:
 
 
 """
-2. Interpreting the trace
+###############################################################################
+# INTERPRETING THE TRACE
+###############################################################################
 
 Takes a raw trace to make sense of it:
     - Detects variable assignments and the line where they occurred
@@ -404,12 +408,26 @@ def trace_to_history(trace: Trace, filters: Filters) -> History:
     return result
 
 
-"""
-3. The automatic tracing when one imports the module
-"""
+###############################################################################
+# Running the trace
+###############################################################################
 
-# Import after the rest of the file, to avoid circular imports
-from .reporter import print_history  # noqa: E402
+
+def trace_code(source: str, done_callback: DoneCallback) -> None:
+    """
+    Given the source of a python program, returns its trace.
+
+    We need the callback architecture because some programs may raise exceptions
+    or otherwise be interrupted. In that case:
+    - The callback will first always be called
+    - Any exception will be raised after that
+    """
+    compiled = compile(source=source, filename="", mode="exec")
+
+    module = ModuleType("traced_module")
+
+    trace_next_loaded_module(done_callback)
+    exec(compiled, module.__dict__)  # Execute code within the module's namespace
 
 
 def trace_next_loaded_module(done_callback: DoneCallback):
@@ -424,6 +442,10 @@ def _get_importer_frame() -> FrameType | None:
         if not filename.startswith("<") and filename != __file__:
             return frame_info.frame
     return None
+
+
+# Import only here, to avoid circular import problems
+from .reporter import print_history  # noqa: E402
 
 
 def _dump_report(trace: Trace):

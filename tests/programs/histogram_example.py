@@ -11,9 +11,8 @@ def is_zero(x):
 sum = 0
 for a in range(10):
     sum += a
+    is_zero(sum)
 
-is_zero(sum)
-
-for i in range(20):
-    for j in range(i):
+for i in range(10):
+    for j in range(10):
         i * j

@@ -1,14 +1,14 @@
 ## TODO
 
-- Describe the -m tools in the README.md
+Add a view with an animated trace, with the current state visible.
+Maybe the old state flies away ?
 
-## IDEAS
+## Maybe
 
-- Animated trace
-- Interactive trace, selecting a line shows the local history of variables
-- Nested boxes for activations
-- Histogram exponential axis (when automatically detected or on demand)
-- ...
+- Speed control / Manual nav / Automaticaly determine the best animation length
+- Capture the animation with Ascii-cinema / moviepy / console.save_svg
+- Fix jitter in animated_histogram when scrolling (video game camera technique)
+- Show activations ? Just the depth ?
 
 ## Running example programs
 
