@@ -1,8 +1,12 @@
+"""
+Displays the trace of a given python program.
+"""
+
 import argparse
 
 from rich.console import Console
 
-from . import Filters, Trace, trace_code, trace_to_history
+from . import Trace, trace_code, trace_to_history
 from .reporter import history_to_table
 
 
@@ -17,9 +21,7 @@ def run():
         source = content_file.read()
 
     def on_trace(trace: Trace) -> None:
-        history = trace_to_history(
-            trace, Filters.FUNCTION_ASSIGNMENT | Filters.NO_EFFECT
-        )
+        history = trace_to_history(trace)
         console = Console()
         console.print()
         console.print(history_to_table(history))

@@ -5,7 +5,6 @@ from atrace import (
     UNASSIGN,
     Call,
     ExceptionOccurred,
-    Filters,
     Line,
     Loc,
     Output,
@@ -24,7 +23,7 @@ class TestAbruptTermination(unittest.TestCase):
         trace_next_loaded_module(self.callback_done)
 
         with self.assertRaises(Exception):
-            from .programs import syntax_error  # noqa
+            from .snippets import syntax_error  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -39,31 +38,31 @@ class TestAbruptTermination(unittest.TestCase):
         ]
         self.assertEqual(expected_trace, self.trace)
 
-        expected_history = [(Loc("<module>", 4), {Var("<module>", "x"): 1}, None)]
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
+        expected_history = [
+            (Loc("<module>", 2), {}, None),
+            (Loc("<module>", 4), {Var("<module>", "x"): 1}, None),
+            (Loc("<module>", 6), {}, None),
+        ]
+        self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_uncaught_exception(self):
         trace_next_loaded_module(self.callback_done)
 
         with self.assertRaises(Exception):
-            from .programs import uncaught_exception  # noqa
+            from .snippets import uncaught_exception  # noqa
 
         expected_history = [
+            (Loc("<module>", 1), {}, None),
             (Loc("<module>", 3), {}, "hai\n"),
             (Loc("<module>", 4), {Var("<module>", "x"): 1}, None),
+            (Loc("<module>", 5), {}, None),
         ]
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
+        self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_caught_exception(self):
         trace_next_loaded_module(self.callback_done)
 
-        from .programs import caught_exception  # noqa
+        from .snippets import caught_exception  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -83,10 +82,10 @@ class TestAbruptTermination(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
+            (Loc("<module>", 1), {}, None),
+            (Loc("<module>", 3), {}, None),
+            (Loc("<module>", 4), {}, None),
             (Loc("<module>", 5), {Var("<module>", "e"): mock.ANY}, None),
             (Loc("<module>", 6), {Var("<module>", "e"): UNASSIGN}, "error message\n"),
         ]
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
+        self.assertEqual(expected_history, trace_to_history(self.trace))

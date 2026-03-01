@@ -1,10 +1,14 @@
+"""
+Displays a numbered and syntax highlighted representation of a given program
+"""
+
 import argparse
 
 from rich.console import Console
 from rich.syntax import Syntax
 from rich.table import Table
 
-from . import Filters, History, Loc, Trace, trace_code, trace_to_history
+from . import History, Loc, Trace, trace_code, trace_to_history
 from .tool_support import NumberedLines, add_line_numbers, visible_lines
 
 INTENSE_COLOR = 0, 0, 255
@@ -72,7 +76,7 @@ def run():
         source = content_file.read()
 
     def on_trace(trace: Trace) -> None:
-        history = trace_to_history(trace, filters=Filters.NONE)
+        history = trace_to_history(trace)
         numbered_lines = add_line_numbers(source)
         console = Console()
         console.print()  # Prints a blank line

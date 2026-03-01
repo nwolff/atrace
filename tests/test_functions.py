@@ -3,7 +3,6 @@ from unittest import mock
 
 from atrace import (
     Call,
-    Filters,
     Line,
     Loc,
     Output,
@@ -20,7 +19,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_function(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import function  # noqa
+        from .snippets import function  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -36,19 +35,6 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 4), {Var("<module>", "double"): mock.ANY}, None),
-            (Loc("double", 4), {Var("double", "a"): 3}, None),
-            (Loc("double", 5), {Var("double", "result"): 6}, None),
-            (Loc("<module>", 9), {Var("<module>", "x"): 6}, None),
-        ]
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
-
-        # See what life looks like when we don't filter
-
-        expected_full_history = [
             (Loc("<module>", 1), {}, None),
             (Loc("<module>", 4), {Var("<module>", "double"): mock.ANY}, None),
             (Loc("double", 4), {Var("double", "a"): 3}, None),
@@ -56,14 +42,11 @@ class TestFunctions(unittest.TestCase):
             (Loc("double", 6), {}, None),
             (Loc("<module>", 9), {Var("<module>", "x"): 6}, None),
         ]
-        self.assertEqual(
-            expected_full_history,
-            trace_to_history(self.trace, Filters.NONE),
-        )
+        self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_function_assign_before_call(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import function_assign_before_call  # noqa
+        from .snippets import function_assign_before_call  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -79,19 +62,18 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
+            (Loc("<module>", 1), {}, None),
             (Loc("<module>", 4), {Var("<module>", "double"): mock.ANY}, None),
             (Loc("<module>", 8), {Var("<module>", "x"): 3}, None),
             (Loc("double", 4), {Var("double", "a"): 5}, None),
+            (Loc("double", 5), {}, None),
             (Loc("<module>", 9), {Var("<module>", "x"): 10}, None),
         ]
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
+        self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_function_modifying_global(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import function_modifying_global  # noqa
+        from .snippets import function_modifying_global  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -108,20 +90,19 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
+            (Loc("<module>", 1), {}, None),
             (Loc("<module>", 3), {Var("<module>", "c"): "start"}, None),
             (Loc("<module>", 6), {Var("<module>", "f"): mock.ANY}, None),
             (Loc("f", 6), {Var("f", "a"): 3, Var("f", "b"): 14}, None),
             (Loc("f", 8), {Var("<module>", "c"): 17}, None),
+            (Loc("f", 9), {}, None),
             (Loc("<module>", 12), {Var("<module>", "x"): 34}, None),
         ]
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
+        self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_function_shadowing_global(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import function_shadowing_global  # noqa
+        from .snippets import function_shadowing_global  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -147,20 +128,19 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
+            (Loc("<module>", 1), {}, None),
             (Loc("<module>", 3), {Var("<module>", "c"): "start"}, None),
             (Loc("<module>", 6), {Var("<module>", "f"): mock.ANY}, None),
             (Loc("f", 6), {Var("f", "a"): 3, Var("f", "b"): 14}, None),
             (Loc("f", 7), {Var("f", "c"): 17}, None),
+            (Loc("f", 8), {}, None),
             (Loc("<module>", 11), {Var("<module>", "x"): 34}, None),
         ]
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
+        self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_function_with_recursion(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import function_with_recursion  # noqa
+        from .snippets import function_with_recursion  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -184,16 +164,17 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
+            (Loc("<module>", 1), {}, None),
             (Loc("<module>", 4), {Var("<module>", "sum_up_to"): mock.ANY}, None),
             (Loc("sum_up_to", 4), {Var("sum_up_to", "x"): 2}, None),
             (Loc("sum_up_to", 4), {Var("sum_up_to", "x"): 1}, None),
             (Loc("sum_up_to", 4), {Var("sum_up_to", "x"): 0}, None),
+            (Loc("sum_up_to", 5), {}, None),
+            (Loc("sum_up_to", 5), {}, None),
+            (Loc("sum_up_to", 5), {}, None),
             (Loc("<module>", 8), {Var("<module>", "result"): 3}, None),
         ]
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
+        self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_function_nested(self):
         """
@@ -201,7 +182,7 @@ class TestFunctions(unittest.TestCase):
         This is how the python runtime works.
         """
         trace_next_loaded_module(self.callback_done)
-        from .programs import function_nested  # noqa
+        from .snippets import function_nested  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -231,22 +212,22 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
+            (Loc("<module>", 1), {}, None),
             (Loc("<module>", 4), {Var("<module>", "outer"): mock.ANY}, None),
             (Loc("outer", 4), {Var("outer", "x"): 4}, None),
             (Loc("outer", 5), {Var("outer", "y"): 5}, None),
             (Loc("outer", 7), {Var("outer", "inner"): mock.ANY}, None),
             (Loc("inner", 7), {Var("inner", "a"): 8, Var("inner", "y"): 5}, None),
             (Loc("inner", 8), {Var("inner", "x"): 13}, None),
+            (Loc("inner", 9), {}, None),
+            (Loc("outer", 11), {}, None),
             (Loc("<module>", 14), {Var("<module>", "result"): 13}, None),
         ]
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
+        self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_function_in_variable(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import function_in_variable  # noqa
+        from .snippets import function_in_variable  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -269,32 +250,31 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
+            (Loc("<module>", 1), {}, None),
             (Loc("<module>", 4), {Var("<module>", "f"): mock.ANY}, None),
             (Loc("<module>", 8), {Var("<module>", "greet"): mock.ANY}, None),
             (Loc("f", 4), {Var("f", "name"): "Mike"}, None),
             (Loc("f", 5), {}, "Hello Mike\n"),
+            (Loc("<module>", 10), {}, None),
         ]
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
+        self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_function_lambda(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import function_lambda  # noqa
+        from .snippets import function_lambda  # noqa
 
         expected_history = [
+            (Loc("<module>", 1), {}, None),
             (Loc("<module>", 3), {Var("<module>", "add"): mock.ANY}, None),
             (
                 Loc("<lambda>", 3),
                 {Var("<lambda>", "y"): 3, Var("<lambda>", "x"): 5},
                 None,
             ),
+            (Loc("<lambda>", 3), {}, None),
             (Loc("<module>", 4), {}, "8\n"),
         ]
-        self.assertEqual(
-            expected_history, trace_to_history(self.trace, Filters.NO_EFFECT)
-        )
+        self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_function_generator(self):
         """
@@ -302,21 +282,25 @@ class TestFunctions(unittest.TestCase):
         when we re-enter the generator.
         """
         trace_next_loaded_module(self.callback_done)
-        from .programs import function_generator  # noqa
+        from .snippets import function_generator  # noqa
 
         expected_history = [
+            (Loc("<module>", 1), {}, None),
             (Loc("<module>", 4), {Var("<module>", "countdown"): mock.ANY}, None),
             (Loc("countdown", 4), {Var("countdown", "n"): 2}, None),
+            (Loc("countdown", 5), {}, None),
+            (Loc("countdown", 6), {}, None),
             (Loc("<module>", 10), {Var("<module>", "num"): 2}, None),
             (Loc("<module>", 11), {}, "2\n"),
             (Loc("countdown", 6), {Var("countdown", "n"): 2}, None),
             (Loc("countdown", 7), {Var("countdown", "n"): 1}, None),
+            (Loc("countdown", 5), {}, None),
+            (Loc("countdown", 6), {}, None),
             (Loc("<module>", 10), {Var("<module>", "num"): 1}, None),
             (Loc("<module>", 11), {}, "1\n"),
             (Loc("countdown", 6), {Var("countdown", "n"): 1}, None),
             (Loc("countdown", 7), {Var("countdown", "n"): 0}, None),
+            (Loc("countdown", 5), {}, None),
+            (Loc("<module>", 10), {}, None),
         ]
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
+        self.assertEqual(expected_history, trace_to_history(self.trace))

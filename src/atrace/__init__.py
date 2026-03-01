@@ -3,7 +3,6 @@ import inspect
 import sys
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from enum import IntFlag, auto
 from itertools import groupby
 from operator import itemgetter
 from types import FrameType, ModuleType, TracebackType
@@ -366,46 +365,10 @@ def _filter_zero_lines(history: History) -> History:
     ]
 
 
-def _filter_no_effect(history: History) -> History:
-    """ " Remove history items that neither assign nor output"""
-    return [
-        (loc, assignments, output)
-        for loc, assignments, output in history
-        if assignments or output
-    ]
-
-
-def _remove_functions(assignments: Assignments):
-    return {var: val for var, val in assignments.items() if not callable(val)}
-
-
-def _filter_function_assignment(history: History) -> History:
-    return [
-        (loc, _remove_functions(assignments), output)
-        for loc, assignments, output in history
-    ]
-
-
-class Filters(IntFlag):
-    NONE = 0
-    NO_EFFECT = auto()
-    FUNCTION_ASSIGNMENT = auto()
-
-
-def trace_to_history(trace: Trace, filters: Filters) -> History:
+def trace_to_history(trace: Trace) -> History:
     unpacked = _trace_to_unpacked_history(trace)
     joined = list(_join_outputs(unpacked))
-    result = _filter_zero_lines(joined)
-
-    if Filters.FUNCTION_ASSIGNMENT & filters:
-        result = _filter_function_assignment(result)
-
-    # This must come last (because the previous step may have turned an assignment
-    # into a no effect item)
-    if Filters.NO_EFFECT & filters:
-        result = _filter_no_effect(result)
-
-    return result
+    return _filter_zero_lines(joined)  # Always remove these artifacts
 
 
 ###############################################################################
@@ -417,7 +380,7 @@ def trace_code(source: str, done_callback: DoneCallback) -> None:
     """
     Given the source of a python program, returns its trace.
 
-    We need the callback architecture because some programs may raise exceptions
+    We need the callback architecture because some snippets may raise exceptions
     or otherwise be interrupted. In that case:
     - The callback will first always be called
     - Any exception will be raised after that
@@ -449,7 +412,7 @@ from .reporter import print_history  # noqa: E402
 
 
 def _dump_report(trace: Trace):
-    history = trace_to_history(trace, Filters.FUNCTION_ASSIGNMENT | Filters.NO_EFFECT)
+    history = trace_to_history(trace)
     print_history(history)
 
 

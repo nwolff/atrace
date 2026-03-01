@@ -4,7 +4,6 @@ from unittest.mock import patch
 from atrace import (
     UNASSIGN,
     Call,
-    Filters,
     History,
     Line,
     Loc,
@@ -27,7 +26,7 @@ class TestSimple(unittest.TestCase):
     def test_empty(self):
         trace_next_loaded_module(self.callback_done)
 
-        from .programs import empty  # noqa
+        from .snippets import empty  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -36,15 +35,12 @@ class TestSimple(unittest.TestCase):
         ]
         self.assertEqual(expected_trace, self.trace)
 
-        expected_history: History = []
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
+        expected_history: History = [(Loc("<module>", 1), {}, None)]
+        self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_single_assignment(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import single_assignment  # noqa
+        from .snippets import single_assignment  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -56,16 +52,17 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
+            (Loc("<module>", 1), {}, None),
             (Loc("<module>", 3), {Var("<module>", "x"): 1}, None),
         ]
         self.assertEqual(
             expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
+            trace_to_history(self.trace),
         )
 
     def test_assign_none_unassign(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import assign_none_unassign  # noqa
+        from .snippets import assign_none_unassign  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -79,6 +76,7 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
+            (Loc("<module>", 1), {}, None),
             (Loc("<module>", 3), {Var("<module>", "x"): 1}, None),
             (Loc("<module>", 4), {Var("<module>", "x"): None}, None),
             (Loc("<module>", 5), {Var("<module>", "x"): UNASSIGN}, None),
@@ -86,13 +84,13 @@ class TestSimple(unittest.TestCase):
         ]
         self.assertEqual(
             expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
+            trace_to_history(self.trace),
         )
 
     def test_parallel_assignment(self):
         trace_next_loaded_module(self.callback_done)
 
-        from .programs import parallel_assignment  # noqa
+        from .snippets import parallel_assignment  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -103,20 +101,18 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
+            (Loc("<module>", 1), {}, None),
             (
                 Loc("<module>", 3),
                 {Var("<module>", "x"): 1, Var("<module>", "y"): 2},
                 None,
             ),
         ]
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
+        self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_print(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import print as _print  # noqa
+        from .snippets import print as _print  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -129,16 +125,14 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history: History = [
+            (Loc("<module>", 1), {}, None),
             (Loc("<module>", 3), {}, "hello\n"),
         ]
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
+        self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_assign_then_print(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import assign_then_print  # noqa
+        from .snippets import assign_then_print  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -152,18 +146,16 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
+            (Loc("<module>", 1), {}, None),
             (Loc("<module>", 3), {Var("<module>", "x"): 1}, None),
             (Loc("<module>", 4), {}, "1\n"),
         ]
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
+        self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_input(self):
         trace_next_loaded_module(self.callback_done)
         with patch("builtins.input", return_value="Bob"):
-            from .programs import input  # noqa
+            from .snippets import input  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -179,18 +171,16 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
+            (Loc("<module>", 1), {}, None),
             (Loc("<module>", 3), {Var("<module>", "x"): "Bob"}, None),
             (Loc("<module>", 4), {}, "hello Bob\n"),
         ]
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
+        self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_while_loop(self):
         trace_next_loaded_module(self.callback_done)
 
-        from .programs import while_loop  # noqa
+        from .snippets import while_loop  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -206,19 +196,20 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
+            (Loc("<module>", 1), {}, None),
             (Loc("<module>", 3), {Var("<module>", "x"): 0}, None),
+            (Loc("<module>", 4), {}, None),
             (Loc("<module>", 5), {Var("<module>", "x"): 1}, None),
+            (Loc("<module>", 4), {}, None),
             (Loc("<module>", 5), {Var("<module>", "x"): 2}, None),
+            (Loc("<module>", 4), {}, None),
         ]
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
+        self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_for_with_print(self):
         trace_next_loaded_module(self.callback_done)
 
-        from .programs import for_with_print  # noqa
+        from .snippets import for_with_print  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -241,22 +232,21 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
+            (Loc("<module>", 1), {}, None),
             (Loc("<module>", 3), {Var("<module>", "i"): 0}, None),
             (Loc("<module>", 4), {}, "0\n"),
             (Loc("<module>", 3), {Var("<module>", "i"): 1}, None),
             (Loc("<module>", 4), {}, "1\n"),
             (Loc("<module>", 3), {Var("<module>", "i"): 2}, None),
             (Loc("<module>", 4), {}, "2\n"),
+            (Loc("<module>", 3), {}, None),
         ]
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
+        self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_loop_with_mutation_and_print(self):
         trace_next_loaded_module(self.callback_done)
 
-        from .programs import loop_with_mutation_and_print  # noqa
+        from .snippets import loop_with_mutation_and_print  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -276,19 +266,20 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
+            (Loc("<module>", 1), {}, None),
             (Loc("<module>", 3), {Var("<module>", "lst"): ["a", "b"]}, None),
+            (Loc("<module>", 4), {}, None),
             (Loc("<module>", 5), {Var("<module>", "lst"): ["b"]}, "a\n"),
+            (Loc("<module>", 4), {}, None),
             (Loc("<module>", 5), {Var("<module>", "lst"): []}, "b\n"),
+            (Loc("<module>", 4), {}, None),
         ]
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
+        self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_list_comprehension(self):
         trace_next_loaded_module(self.callback_done)
 
-        from .programs import list_comprehension  # noqa
+        from .snippets import list_comprehension  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -303,6 +294,7 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
+            (Loc("<module>", 1), {}, None),
             (Loc("<module>", 3), {Var("<module>", "x"): 0}, None),
             (Loc("<module>", 3), {Var("<module>", "x"): 1}, None),
             (Loc("<module>", 3), {Var("<module>", "x"): 2}, None),
@@ -316,15 +308,12 @@ class TestSimple(unittest.TestCase):
                 None,
             ),
         ]
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
+        self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_import(self):
         trace_next_loaded_module(self.callback_done)
 
-        from .programs import importing  # noqa
+        from .snippets import importing  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -339,9 +328,9 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history: History = [
+            (Loc("<module>", 1), {}, None),
+            (Loc("<module>", 3), {}, None),
+            (Loc("<module>", 4), {}, None),
             (Loc("<module>", 6), {}, "3.141592653589793\n"),
         ]
-        self.assertEqual(
-            expected_history,
-            trace_to_history(self.trace, Filters.NO_EFFECT),
-        )
+        self.assertEqual(expected_history, trace_to_history(self.trace))

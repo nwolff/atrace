@@ -1,3 +1,9 @@
+"""
+Displays a view of a given program, with :
+ - The code on the left
+ - A histogram of how many times each line was executed on the right
+"""
+
 import argparse
 import math
 from collections import defaultdict
@@ -8,7 +14,7 @@ from rich.console import Console
 from rich.padding import Padding
 from rich.table import Table
 
-from . import Filters, History, Loc, Trace, trace_code, trace_to_history
+from . import History, Loc, Trace, trace_code, trace_to_history
 from .code import (
     CODE_VIEW_WIDTH,
     NumberedLines,
@@ -83,7 +89,7 @@ def run():
         source = content_file.read()
 
     def on_trace(trace: Trace) -> None:
-        history = trace_to_history(trace, filters=Filters.NONE)
+        history = trace_to_history(trace)
         numbered_lines = add_line_numbers(source)
         console = Console()
         console.print(generate_code_and_histogram_display(numbered_lines, history))

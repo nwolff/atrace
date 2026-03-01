@@ -10,7 +10,7 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from . import UNASSIGN, History, Var
+from . import UNASSIGN, Assignments, History, Var
 
 # Make localization work in thonny:
 # Thonny does not pass environment variables to the running program,
@@ -38,11 +38,25 @@ RowData: TypeAlias = list[str | None]
 TableData: TypeAlias = tuple[HeaderData, list[RowData]]
 
 
-def variable_to_column_name(var: Var) -> str:
+def format_variable(var: Var) -> str:
     return var.name if var.scope == "<module>" else f"({var.scope}) {var.name}"
 
 
-def human_double_quote(data):
+def format_value(value: Any) -> str | None:
+    match value:
+        case None:
+            return "None"
+        case _ if value is UNASSIGN:
+            return None
+        case _:
+            return _human_double_quote(value)
+
+
+def format_output(output: str | None) -> str | None:
+    return output.strip() if output else None
+
+
+def _human_double_quote(data):
     text = repr(data)
     # Replace ' if it's at the start/end of a string
     # OR next to structural chars , [ ] ( ) { } :
@@ -52,7 +66,30 @@ def human_double_quote(data):
     return re.sub(pattern, '"', text)
 
 
+def _filter_function_assignment(history: History) -> History:
+    def _remove_functions(assignments: Assignments) -> Assignments:
+        """Remove variables that contain functions the given assignments."""
+        return {var: val for var, val in assignments.items() if not callable(val)}
+
+    """Remove variables that contain functions from the assignments in History."""
+    return [
+        (loc, _remove_functions(assignments), output)
+        for loc, assignments, output in history
+    ]
+
+
+def _filter_no_effect(history: History) -> History:
+    """Remove history items that neither assign nor output."""
+    return [
+        (loc, assignments, output)
+        for loc, assignments, output in history
+        if assignments or output
+    ]
+
+
 def history_to_table_data(history: History) -> TableData:
+    history = _filter_function_assignment(history)
+    history = _filter_no_effect(history)
     all_variables = []
     history_has_output = False
 
@@ -69,7 +106,7 @@ def history_to_table_data(history: History) -> TableData:
     # Build headers
     headers = [LINE]
     for variable in all_variables:
-        headers.append(variable_to_column_name(variable))
+        headers.append(format_variable(variable))
     if history_has_output:
         headers.append(OUTPUT)
 
@@ -81,23 +118,15 @@ def history_to_table_data(history: History) -> TableData:
 
         row.append(str(loc.line_no))
 
-        content: Any | None
         for variable in all_variables:
             if variable in assignments:
-                value = assignments[variable]
-                match value:
-                    case None:
-                        content = "None"
-                    case _ if value is UNASSIGN:
-                        content = None
-                    case _:
-                        content = human_double_quote(value)
+                content = format_value(assignments[variable])
             else:
                 content = None
             row.append(content)
 
         if history_has_output:
-            row.append(output.strip() if output else None)
+            row.append(format_output(output))
 
     return headers, rows
 
