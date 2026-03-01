@@ -1,24 +1,29 @@
-## TODO
+# TODO
 
-Add a view with an animated trace, with the current state visible.
-Maybe the old state flies away ?
+Add a view with an animated trace, with the current state visible. Maybe the old
+state flies away ?
 
 ## Maybe
 
+- Localized README. [English](README.md) | [Français](README.fr.md)
 - Speed control / Manual nav / Automaticaly determine the best animation length
 - Capture the animation with Ascii-cinema / moviepy / console.save_svg
 - Fix jitter in animated_histogram when scrolling (video game camera technique)
 - Show activations ? Just the depth ?
 
+# Development
+
+We use uv for development.
+
 ## Running example programs
 
 With cpython:
 
-    uv run tests/programs/small_example.py
+    uv run examples/small.py
 
 With pypy:
 
-    uv run --python pypy tests/programs/small_example.py
+    uv run --python pypy examples/small.py
 
 ## Type Checking
 
@@ -26,7 +31,7 @@ With pypy:
 
 ## Linting
 
-    uv run ruff check src tests --fix
+    uv run ruff check src tests examples --fix
 
 ## Code formating
 
@@ -76,7 +81,7 @@ Then edit the newly created .po file
 Here for fr:
 
     export LANG=fr
-    uv run tests/programs/small_example.py
+    uv run example_programs/small.py
 
 ## Developing for Thonny
 

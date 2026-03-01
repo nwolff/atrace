@@ -417,7 +417,7 @@ def trace_code(source: str, done_callback: DoneCallback) -> None:
     """
     Given the source of a python program, returns its trace.
 
-    We need the callback architecture because some programs may raise exceptions
+    We need the callback architecture because some snippets may raise exceptions
     or otherwise be interrupted. In that case:
     - The callback will first always be called
     - Any exception will be raised after that

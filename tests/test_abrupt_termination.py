@@ -24,7 +24,7 @@ class TestAbruptTermination(unittest.TestCase):
         trace_next_loaded_module(self.callback_done)
 
         with self.assertRaises(Exception):
-            from .programs import syntax_error  # noqa
+            from .snippets import syntax_error  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -49,7 +49,7 @@ class TestAbruptTermination(unittest.TestCase):
         trace_next_loaded_module(self.callback_done)
 
         with self.assertRaises(Exception):
-            from .programs import uncaught_exception  # noqa
+            from .snippets import uncaught_exception  # noqa
 
         expected_history = [
             (Loc("<module>", 3), {}, "hai\n"),
@@ -63,7 +63,7 @@ class TestAbruptTermination(unittest.TestCase):
     def test_caught_exception(self):
         trace_next_loaded_module(self.callback_done)
 
-        from .programs import caught_exception  # noqa
+        from .snippets import caught_exception  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),

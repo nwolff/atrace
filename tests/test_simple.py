@@ -27,7 +27,7 @@ class TestSimple(unittest.TestCase):
     def test_empty(self):
         trace_next_loaded_module(self.callback_done)
 
-        from .programs import empty  # noqa
+        from .snippets import empty  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -44,7 +44,7 @@ class TestSimple(unittest.TestCase):
 
     def test_single_assignment(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import single_assignment  # noqa
+        from .snippets import single_assignment  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -65,7 +65,7 @@ class TestSimple(unittest.TestCase):
 
     def test_assign_none_unassign(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import assign_none_unassign  # noqa
+        from .snippets import assign_none_unassign  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -92,7 +92,7 @@ class TestSimple(unittest.TestCase):
     def test_parallel_assignment(self):
         trace_next_loaded_module(self.callback_done)
 
-        from .programs import parallel_assignment  # noqa
+        from .snippets import parallel_assignment  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -116,7 +116,7 @@ class TestSimple(unittest.TestCase):
 
     def test_print(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import print as _print  # noqa
+        from .snippets import print as _print  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -138,7 +138,7 @@ class TestSimple(unittest.TestCase):
 
     def test_assign_then_print(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import assign_then_print  # noqa
+        from .snippets import assign_then_print  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -163,7 +163,7 @@ class TestSimple(unittest.TestCase):
     def test_input(self):
         trace_next_loaded_module(self.callback_done)
         with patch("builtins.input", return_value="Bob"):
-            from .programs import input  # noqa
+            from .snippets import input  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -190,7 +190,7 @@ class TestSimple(unittest.TestCase):
     def test_while_loop(self):
         trace_next_loaded_module(self.callback_done)
 
-        from .programs import while_loop  # noqa
+        from .snippets import while_loop  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -218,7 +218,7 @@ class TestSimple(unittest.TestCase):
     def test_for_with_print(self):
         trace_next_loaded_module(self.callback_done)
 
-        from .programs import for_with_print  # noqa
+        from .snippets import for_with_print  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -256,7 +256,7 @@ class TestSimple(unittest.TestCase):
     def test_loop_with_mutation_and_print(self):
         trace_next_loaded_module(self.callback_done)
 
-        from .programs import loop_with_mutation_and_print  # noqa
+        from .snippets import loop_with_mutation_and_print  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -288,7 +288,7 @@ class TestSimple(unittest.TestCase):
     def test_list_comprehension(self):
         trace_next_loaded_module(self.callback_done)
 
-        from .programs import list_comprehension  # noqa
+        from .snippets import list_comprehension  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -324,7 +324,7 @@ class TestSimple(unittest.TestCase):
     def test_import(self):
         trace_next_loaded_module(self.callback_done)
 
-        from .programs import importing  # noqa
+        from .snippets import importing  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),

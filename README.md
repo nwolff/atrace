@@ -8,7 +8,7 @@ Automatically prints a trace table of **simple programs**
 
 This module is intended for beginner programmers.
 
-The trace table of test/programs/small_example.py is:
+The trace table of examples/small.py is:
 
 ```
 ╭───────┬────┬────┬─────────┬───────────────┬──────────────────┬─────────────╮
@@ -25,12 +25,18 @@ The trace table of test/programs/small_example.py is:
 ╰───────┴────┴────┴─────────┴───────────────┴──────────────────┴─────────────╯
 ```
 
+## Installing the package
+
+The package is available on pypi.
+
+Install the latest version with uv, pip, the Thonny package manager
+
 ## Generating a trace for code under development
 
 Just import the module at the top of your file:
 
 ```
-import atrace  # noqa
+import atrace 
 
 x, y = 1, 3
 ...
@@ -40,21 +46,25 @@ Every time you run the program the trace table will be printed when the program 
 The trace is printed even if the program is interrupted or an uncaught exception is
 raised.
 
-## Generating different views and animations of the program run
+## Generating different views and animations of the execution of a program
 
 You don't need to import atrace in the programs if you run the tool like this.
 
 To display the trace for a program :
 
-    uv run -m atrace tests/programs/small_example.py
+    python3 -m atrace examples/small.py
+
+To display a line by line animation of the trace :
+
+    python3 -m atrace.animated examples/fibonacci.py
 
 To display a histogram of how many times lines are executed in a program :
 
-    uv run -m atrace.histogram tests/programs/histogram_example.py
+    python3 -m atrace.histogram examples/histogram.py
 
 To display a line by line animation of the histogram :
 
-    uv run -m atrace.animated_histogram tests/programs/fizzbuzz_example.py 
+    python3 -m atrace.animated_histogram examples/fizzbuzz.py 
 
 ## Compatibility
 

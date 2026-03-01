@@ -20,7 +20,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_function(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import function  # noqa
+        from .snippets import function  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -63,7 +63,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_function_assign_before_call(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import function_assign_before_call  # noqa
+        from .snippets import function_assign_before_call  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -91,7 +91,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_function_modifying_global(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import function_modifying_global  # noqa
+        from .snippets import function_modifying_global  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -121,7 +121,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_function_shadowing_global(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import function_shadowing_global  # noqa
+        from .snippets import function_shadowing_global  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -160,7 +160,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_function_with_recursion(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import function_with_recursion  # noqa
+        from .snippets import function_with_recursion  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -201,7 +201,7 @@ class TestFunctions(unittest.TestCase):
         This is how the python runtime works.
         """
         trace_next_loaded_module(self.callback_done)
-        from .programs import function_nested  # noqa
+        from .snippets import function_nested  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -246,7 +246,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_function_in_variable(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import function_in_variable  # noqa
+        from .snippets import function_in_variable  # noqa
 
         expected_trace = [
             (Loc("<module>", 0), Call({}, {})),
@@ -281,7 +281,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_function_lambda(self):
         trace_next_loaded_module(self.callback_done)
-        from .programs import function_lambda  # noqa
+        from .snippets import function_lambda  # noqa
 
         expected_history = [
             (Loc("<module>", 3), {Var("<module>", "add"): mock.ANY}, None),
@@ -302,7 +302,7 @@ class TestFunctions(unittest.TestCase):
         when we re-enter the generator.
         """
         trace_next_loaded_module(self.callback_done)
-        from .programs import function_generator  # noqa
+        from .snippets import function_generator  # noqa
 
         expected_history = [
             (Loc("<module>", 4), {Var("<module>", "countdown"): mock.ANY}, None),
