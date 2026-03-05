@@ -4,13 +4,18 @@ Displays the animated trace of a given python program.
 
 import argparse
 
+from rich import box
 from rich.padding import Padding
 from rich.table import Table
 
-from . import History, Loc, Trace, trace_code, trace_to_history
+from . import Assignments, History, Loc, Trace, trace_code, trace_to_history
 from .code import CODE_VIEW_WIDTH, generate_code_display
 from .reporter import (
-    history_to_table,
+    OUTPUT,
+    format_output,
+    format_value,
+    format_variable,
+    remove_functions,
 )
 from .tool_support import NumberedLines, add_line_numbers, animate
 
@@ -34,10 +39,29 @@ def generate_code_and_trace_display(
     return padded_grid
 
 
+def apply_new(assignments: Assignments, new: Assignments) -> None:
+    # Is this as standard dict operation ?
+    for variable, value in new.items():
+        assignments[variable] = value
+
+
 def generate_trace_display(
-    numbered_lines: NumberedLines, history: History, current_loc: Loc | None = None
+    _numbered_lines: NumberedLines, history: History, _current_loc: (Loc | None) = None
 ) -> Table:
-    return history_to_table(history)
+    current_assignments: Assignments = {}
+    last_output = None
+    for _, assignments, output, _ in history:
+        last_output = output
+        apply_new(current_assignments, assignments)
+    table = Table(box=box.ROUNDED, padding=(0, 1, 0, 2), header_style="none")
+    filtered_assignments = remove_functions(current_assignments)
+    for variable in filtered_assignments.keys():
+        table.add_column(format_variable(variable), justify="right")
+    table.add_column(OUTPUT, justify="right")
+
+    row = [format_value(v) for v in filtered_assignments.values()]
+    table.add_row(*row, format_output(last_output))
+    return table
 
 
 def run():

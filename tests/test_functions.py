@@ -5,6 +5,7 @@ from atrace import (
     Call,
     Line,
     Loc,
+    Meta,
     Output,
     Return,
     Var,
@@ -35,12 +36,17 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 4), {Var("<module>", "double"): mock.ANY}, None),
-            (Loc("double", 4), {Var("double", "a"): 3}, None),
-            (Loc("double", 5), {Var("double", "result"): 6}, None),
-            (Loc("double", 6), {}, None),
-            (Loc("<module>", 9), {Var("<module>", "x"): 6}, None),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (
+                Loc("<module>", 4),
+                {Var("<module>", "double"): mock.ANY},
+                None,
+                Meta.NONE,
+            ),
+            (Loc("double", 4), {Var("double", "a"): 3}, None, Meta.CALL),
+            (Loc("double", 5), {Var("double", "result"): 6}, None, Meta.NONE),
+            (Loc("double", 6), {}, None, Meta.RETURN),
+            (Loc("<module>", 9), {Var("<module>", "x"): 6}, None, Meta.NONE),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -62,12 +68,17 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 4), {Var("<module>", "double"): mock.ANY}, None),
-            (Loc("<module>", 8), {Var("<module>", "x"): 3}, None),
-            (Loc("double", 4), {Var("double", "a"): 5}, None),
-            (Loc("double", 5), {}, None),
-            (Loc("<module>", 9), {Var("<module>", "x"): 10}, None),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (
+                Loc("<module>", 4),
+                {Var("<module>", "double"): mock.ANY},
+                None,
+                Meta.NONE,
+            ),
+            (Loc("<module>", 8), {Var("<module>", "x"): 3}, None, Meta.NONE),
+            (Loc("double", 4), {Var("double", "a"): 5}, None, Meta.CALL),
+            (Loc("double", 5), {}, None, Meta.RETURN),
+            (Loc("<module>", 9), {Var("<module>", "x"): 10}, None, Meta.NONE),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -90,13 +101,13 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 3), {Var("<module>", "c"): "start"}, None),
-            (Loc("<module>", 6), {Var("<module>", "f"): mock.ANY}, None),
-            (Loc("f", 6), {Var("f", "a"): 3, Var("f", "b"): 14}, None),
-            (Loc("f", 8), {Var("<module>", "c"): 17}, None),
-            (Loc("f", 9), {}, None),
-            (Loc("<module>", 12), {Var("<module>", "x"): 34}, None),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (Loc("<module>", 3), {Var("<module>", "c"): "start"}, None, Meta.NONE),
+            (Loc("<module>", 6), {Var("<module>", "f"): mock.ANY}, None, Meta.NONE),
+            (Loc("f", 6), {Var("f", "a"): 3, Var("f", "b"): 14}, None, Meta.CALL),
+            (Loc("f", 8), {Var("<module>", "c"): 17}, None, Meta.NONE),
+            (Loc("f", 9), {}, None, Meta.RETURN),
+            (Loc("<module>", 12), {Var("<module>", "x"): 34}, None, Meta.NONE),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -128,13 +139,13 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 3), {Var("<module>", "c"): "start"}, None),
-            (Loc("<module>", 6), {Var("<module>", "f"): mock.ANY}, None),
-            (Loc("f", 6), {Var("f", "a"): 3, Var("f", "b"): 14}, None),
-            (Loc("f", 7), {Var("f", "c"): 17}, None),
-            (Loc("f", 8), {}, None),
-            (Loc("<module>", 11), {Var("<module>", "x"): 34}, None),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (Loc("<module>", 3), {Var("<module>", "c"): "start"}, None, Meta.NONE),
+            (Loc("<module>", 6), {Var("<module>", "f"): mock.ANY}, None, Meta.NONE),
+            (Loc("f", 6), {Var("f", "a"): 3, Var("f", "b"): 14}, None, Meta.CALL),
+            (Loc("f", 7), {Var("f", "c"): 17}, None, Meta.NONE),
+            (Loc("f", 8), {}, None, Meta.RETURN),
+            (Loc("<module>", 11), {Var("<module>", "x"): 34}, None, Meta.NONE),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -164,15 +175,20 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 4), {Var("<module>", "sum_up_to"): mock.ANY}, None),
-            (Loc("sum_up_to", 4), {Var("sum_up_to", "x"): 2}, None),
-            (Loc("sum_up_to", 4), {Var("sum_up_to", "x"): 1}, None),
-            (Loc("sum_up_to", 4), {Var("sum_up_to", "x"): 0}, None),
-            (Loc("sum_up_to", 5), {}, None),
-            (Loc("sum_up_to", 5), {}, None),
-            (Loc("sum_up_to", 5), {}, None),
-            (Loc("<module>", 8), {Var("<module>", "result"): 3}, None),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (
+                Loc("<module>", 4),
+                {Var("<module>", "sum_up_to"): mock.ANY},
+                None,
+                Meta.NONE,
+            ),
+            (Loc("sum_up_to", 4), {Var("sum_up_to", "x"): 2}, None, Meta.CALL),
+            (Loc("sum_up_to", 4), {Var("sum_up_to", "x"): 1}, None, Meta.CALL),
+            (Loc("sum_up_to", 4), {Var("sum_up_to", "x"): 0}, None, Meta.CALL),
+            (Loc("sum_up_to", 5), {}, None, Meta.RETURN),
+            (Loc("sum_up_to", 5), {}, None, Meta.RETURN),
+            (Loc("sum_up_to", 5), {}, None, Meta.RETURN),
+            (Loc("<module>", 8), {Var("<module>", "result"): 3}, None, Meta.NONE),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -212,16 +228,21 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 4), {Var("<module>", "outer"): mock.ANY}, None),
-            (Loc("outer", 4), {Var("outer", "x"): 4}, None),
-            (Loc("outer", 5), {Var("outer", "y"): 5}, None),
-            (Loc("outer", 7), {Var("outer", "inner"): mock.ANY}, None),
-            (Loc("inner", 7), {Var("inner", "a"): 8, Var("inner", "y"): 5}, None),
-            (Loc("inner", 8), {Var("inner", "x"): 13}, None),
-            (Loc("inner", 9), {}, None),
-            (Loc("outer", 11), {}, None),
-            (Loc("<module>", 14), {Var("<module>", "result"): 13}, None),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (Loc("<module>", 4), {Var("<module>", "outer"): mock.ANY}, None, Meta.NONE),
+            (Loc("outer", 4), {Var("outer", "x"): 4}, None, Meta.CALL),
+            (Loc("outer", 5), {Var("outer", "y"): 5}, None, Meta.NONE),
+            (Loc("outer", 7), {Var("outer", "inner"): mock.ANY}, None, Meta.NONE),
+            (
+                Loc("inner", 7),
+                {Var("inner", "a"): 8, Var("inner", "y"): 5},
+                None,
+                Meta.CALL,
+            ),
+            (Loc("inner", 8), {Var("inner", "x"): 13}, None, Meta.NONE),
+            (Loc("inner", 9), {}, None, Meta.RETURN),
+            (Loc("outer", 11), {}, None, Meta.RETURN),
+            (Loc("<module>", 14), {Var("<module>", "result"): 13}, None, Meta.NONE),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -250,12 +271,12 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 4), {Var("<module>", "f"): mock.ANY}, None),
-            (Loc("<module>", 8), {Var("<module>", "greet"): mock.ANY}, None),
-            (Loc("f", 4), {Var("f", "name"): "Mike"}, None),
-            (Loc("f", 5), {}, "Hello Mike\n"),
-            (Loc("<module>", 10), {}, None),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (Loc("<module>", 4), {Var("<module>", "f"): mock.ANY}, None, Meta.NONE),
+            (Loc("<module>", 8), {Var("<module>", "greet"): mock.ANY}, None, Meta.NONE),
+            (Loc("f", 4), {Var("f", "name"): "Mike"}, None, Meta.CALL),
+            (Loc("f", 5), {}, "Hello Mike\n", Meta.RETURN),
+            (Loc("<module>", 10), {}, None, Meta.NONE),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -263,44 +284,78 @@ class TestFunctions(unittest.TestCase):
         trace_next_loaded_module(self.callback_done)
         from .snippets import function_lambda  # noqa
 
+        expected_trace = [
+            (Loc("<module>", 0), Call({}, {})),
+            (Loc("<module>", 1), Line({}, {})),
+            (Loc("<module>", 3), Line({}, {})),
+            (Loc("<module>", 4), Line({"add": mock.ANY}, {})),
+            (Loc("<lambda>", 3), Call({"add": mock.ANY}, {"x": 5, "y": 3})),
+            (Loc("<lambda>", 3), Line({"add": mock.ANY}, {"x": 5, "y": 3})),
+            (Loc("<lambda>", 3), Return({"add": mock.ANY}, {"x": 5, "y": 3}, 8)),
+            (Loc("<module>", 4), Output("8")),
+            (Loc("<module>", 4), Output("\n")),
+            (Loc("<module>", 4), Return({"add": mock.ANY}, {}, None)),
+        ]
+        self.assertEqual(expected_trace, self.trace)
+
         expected_history = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 3), {Var("<module>", "add"): mock.ANY}, None),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (Loc("<module>", 3), {Var("<module>", "add"): mock.ANY}, None, Meta.NONE),
             (
                 Loc("<lambda>", 3),
                 {Var("<lambda>", "y"): 3, Var("<lambda>", "x"): 5},
                 None,
+                Meta.CALL,
             ),
-            (Loc("<lambda>", 3), {}, None),
-            (Loc("<module>", 4), {}, "8\n"),
+            (Loc("<lambda>", 3), {}, None, Meta.RETURN),
+            (Loc("<module>", 4), {}, "8\n", Meta.NONE),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_function_generator(self):
-        """
-        Kind of works, except one sees one too many variable assignment in the generator
-        when we re-enter the generator.
-        """
         trace_next_loaded_module(self.callback_done)
         from .snippets import function_generator  # noqa
 
+        expected_trace = [
+            (Loc("<module>", 0), Call({}, {})),
+            (Loc("<module>", 1), Line({}, {})),
+            (Loc("<module>", 4), Line({}, {})),
+            (Loc("<module>", 10), Line({"countdown": mock.ANY}, {})),
+            (Loc("countdown", 4), Call({"countdown": mock.ANY}, {"n": 1})),
+            (Loc("countdown", 5), Line({"countdown": mock.ANY}, {"n": 1})),
+            (Loc("countdown", 6), Line({"countdown": mock.ANY}, {"n": 1})),
+            (Loc("countdown", 6), Return({"countdown": mock.ANY}, {"n": 1}, 1)),
+            (Loc("<module>", 11), Line({"countdown": mock.ANY, "num": 1}, {})),
+            (Loc("<module>", 11), Output(text="1")),
+            (Loc("<module>", 11), Output(text="\n")),
+            (Loc("<module>", 10), Line({"countdown": mock.ANY, "num": 1}, {})),
+            (Loc("countdown", 6), Call({"countdown": mock.ANY, "num": 1}, {"n": 1})),
+            (Loc("countdown", 7), Line({"countdown": mock.ANY, "num": 1}, {"n": 1})),
+            (Loc("countdown", 5), Line({"countdown": mock.ANY, "num": 1}, {"n": 0})),
+            (
+                Loc("countdown", 5),
+                Return({"countdown": mock.ANY, "num": 1}, {"n": 0}, None),
+            ),
+            (Loc("<module>", 10), Return({"countdown": mock.ANY, "num": 1}, {}, None)),
+        ]
+        self.assertEqual(expected_trace, self.trace)
+
         expected_history = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 4), {Var("<module>", "countdown"): mock.ANY}, None),
-            (Loc("countdown", 4), {Var("countdown", "n"): 2}, None),
-            (Loc("countdown", 5), {}, None),
-            (Loc("countdown", 6), {}, None),
-            (Loc("<module>", 10), {Var("<module>", "num"): 2}, None),
-            (Loc("<module>", 11), {}, "2\n"),
-            (Loc("countdown", 6), {Var("countdown", "n"): 2}, None),
-            (Loc("countdown", 7), {Var("countdown", "n"): 1}, None),
-            (Loc("countdown", 5), {}, None),
-            (Loc("countdown", 6), {}, None),
-            (Loc("<module>", 10), {Var("<module>", "num"): 1}, None),
-            (Loc("<module>", 11), {}, "1\n"),
-            (Loc("countdown", 6), {Var("countdown", "n"): 1}, None),
-            (Loc("countdown", 7), {Var("countdown", "n"): 0}, None),
-            (Loc("countdown", 5), {}, None),
-            (Loc("<module>", 10), {}, None),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (
+                Loc("<module>", 4),
+                {Var("<module>", "countdown"): mock.ANY},
+                None,
+                Meta.NONE,
+            ),
+            (Loc("countdown", 4), {Var("countdown", "n"): 1}, None, Meta.CALL),
+            (Loc("countdown", 5), {}, None, Meta.NONE),
+            (Loc("countdown", 6), {}, None, Meta.RETURN),
+            (Loc("<module>", 10), {Var("<module>", "num"): 1}, None, Meta.NONE),
+            (Loc("<module>", 11), {}, "1\n", Meta.NONE),
+            (Loc("countdown", 6), {Var("countdown", "n"): 1}, None, Meta.CALL),
+            (Loc("countdown", 7), {Var("countdown", "n"): 0}, None, Meta.NONE),
+            (Loc("countdown", 5), {}, None, Meta.RETURN),
+            (Loc("<module>", 10), {}, None, Meta.NONE),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))

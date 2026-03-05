@@ -49,7 +49,7 @@ def animate(
     with Live(None, auto_refresh=False) as live:
         for index in range(len(history)):
             history_up_to_now = history[: index + 1]
-            current_loc, _, _ = history[index]
+            current_loc, _, _, _ = history[index]
             live.update(
                 generate_display(numbered_lines, history_up_to_now, current_loc),
                 refresh=True,

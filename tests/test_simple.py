@@ -7,6 +7,7 @@ from atrace import (
     History,
     Line,
     Loc,
+    Meta,
     Output,
     Return,
     Var,
@@ -35,7 +36,7 @@ class TestSimple(unittest.TestCase):
         ]
         self.assertEqual(expected_trace, self.trace)
 
-        expected_history: History = [(Loc("<module>", 1), {}, None)]
+        expected_history: History = [(Loc("<module>", 1), {}, None, Meta.NONE)]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_single_assignment(self):
@@ -52,8 +53,8 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 3), {Var("<module>", "x"): 1}, None),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (Loc("<module>", 3), {Var("<module>", "x"): 1}, None, Meta.NONE),
         ]
         self.assertEqual(
             expected_history,
@@ -76,11 +77,11 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 3), {Var("<module>", "x"): 1}, None),
-            (Loc("<module>", 4), {Var("<module>", "x"): None}, None),
-            (Loc("<module>", 5), {Var("<module>", "x"): UNASSIGN}, None),
-            (Loc("<module>", 6), {Var("<module>", "x"): "bob"}, None),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (Loc("<module>", 3), {Var("<module>", "x"): 1}, None, Meta.NONE),
+            (Loc("<module>", 4), {Var("<module>", "x"): None}, None, Meta.NONE),
+            (Loc("<module>", 5), {Var("<module>", "x"): UNASSIGN}, None, Meta.NONE),
+            (Loc("<module>", 6), {Var("<module>", "x"): "bob"}, None, Meta.NONE),
         ]
         self.assertEqual(
             expected_history,
@@ -101,11 +102,12 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 1), {}, None),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
             (
                 Loc("<module>", 3),
                 {Var("<module>", "x"): 1, Var("<module>", "y"): 2},
                 None,
+                Meta.NONE,
             ),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
@@ -125,8 +127,8 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history: History = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 3), {}, "hello\n"),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (Loc("<module>", 3), {}, "hello\n", Meta.NONE),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -146,9 +148,9 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 3), {Var("<module>", "x"): 1}, None),
-            (Loc("<module>", 4), {}, "1\n"),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (Loc("<module>", 3), {Var("<module>", "x"): 1}, None, Meta.NONE),
+            (Loc("<module>", 4), {}, "1\n", Meta.NONE),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -171,9 +173,9 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 3), {Var("<module>", "x"): "Bob"}, None),
-            (Loc("<module>", 4), {}, "hello Bob\n"),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (Loc("<module>", 3), {Var("<module>", "x"): "Bob"}, None, Meta.NONE),
+            (Loc("<module>", 4), {}, "hello Bob\n", Meta.NONE),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -196,13 +198,13 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 3), {Var("<module>", "x"): 0}, None),
-            (Loc("<module>", 4), {}, None),
-            (Loc("<module>", 5), {Var("<module>", "x"): 1}, None),
-            (Loc("<module>", 4), {}, None),
-            (Loc("<module>", 5), {Var("<module>", "x"): 2}, None),
-            (Loc("<module>", 4), {}, None),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (Loc("<module>", 3), {Var("<module>", "x"): 0}, None, Meta.NONE),
+            (Loc("<module>", 4), {}, None, Meta.NONE),
+            (Loc("<module>", 5), {Var("<module>", "x"): 1}, None, Meta.NONE),
+            (Loc("<module>", 4), {}, None, Meta.NONE),
+            (Loc("<module>", 5), {Var("<module>", "x"): 2}, None, Meta.NONE),
+            (Loc("<module>", 4), {}, None, Meta.NONE),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -232,14 +234,14 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 3), {Var("<module>", "i"): 0}, None),
-            (Loc("<module>", 4), {}, "0\n"),
-            (Loc("<module>", 3), {Var("<module>", "i"): 1}, None),
-            (Loc("<module>", 4), {}, "1\n"),
-            (Loc("<module>", 3), {Var("<module>", "i"): 2}, None),
-            (Loc("<module>", 4), {}, "2\n"),
-            (Loc("<module>", 3), {}, None),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (Loc("<module>", 3), {Var("<module>", "i"): 0}, None, Meta.NONE),
+            (Loc("<module>", 4), {}, "0\n", Meta.NONE),
+            (Loc("<module>", 3), {Var("<module>", "i"): 1}, None, Meta.NONE),
+            (Loc("<module>", 4), {}, "1\n", Meta.NONE),
+            (Loc("<module>", 3), {Var("<module>", "i"): 2}, None, Meta.NONE),
+            (Loc("<module>", 4), {}, "2\n", Meta.NONE),
+            (Loc("<module>", 3), {}, None, Meta.NONE),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -266,13 +268,13 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 3), {Var("<module>", "lst"): ["a", "b"]}, None),
-            (Loc("<module>", 4), {}, None),
-            (Loc("<module>", 5), {Var("<module>", "lst"): ["b"]}, "a\n"),
-            (Loc("<module>", 4), {}, None),
-            (Loc("<module>", 5), {Var("<module>", "lst"): []}, "b\n"),
-            (Loc("<module>", 4), {}, None),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (Loc("<module>", 3), {Var("<module>", "lst"): ["a", "b"]}, None, Meta.NONE),
+            (Loc("<module>", 4), {}, None, Meta.NONE),
+            (Loc("<module>", 5), {Var("<module>", "lst"): ["b"]}, "a\n", Meta.NONE),
+            (Loc("<module>", 4), {}, None, Meta.NONE),
+            (Loc("<module>", 5), {Var("<module>", "lst"): []}, "b\n", Meta.NONE),
+            (Loc("<module>", 4), {}, None, Meta.NONE),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -294,11 +296,11 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 3), {Var("<module>", "x"): 0}, None),
-            (Loc("<module>", 3), {Var("<module>", "x"): 1}, None),
-            (Loc("<module>", 3), {Var("<module>", "x"): 2}, None),
-            (Loc("<module>", 3), {Var("<module>", "x"): 3}, None),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (Loc("<module>", 3), {Var("<module>", "x"): 0}, None, Meta.NONE),
+            (Loc("<module>", 3), {Var("<module>", "x"): 1}, None, Meta.NONE),
+            (Loc("<module>", 3), {Var("<module>", "x"): 2}, None, Meta.NONE),
+            (Loc("<module>", 3), {Var("<module>", "x"): 3}, None, Meta.NONE),
             (
                 Loc("<module>", 3),
                 {
@@ -306,6 +308,7 @@ class TestSimple(unittest.TestCase):
                     Var("<module>", "lst"): [0, 1, 4, 9],
                 },
                 None,
+                Meta.NONE,
             ),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
@@ -328,9 +331,9 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history: History = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 3), {}, None),
-            (Loc("<module>", 4), {}, None),
-            (Loc("<module>", 6), {}, "3.141592653589793\n"),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (Loc("<module>", 3), {}, None, Meta.NONE),
+            (Loc("<module>", 4), {}, None, Meta.NONE),
+            (Loc("<module>", 6), {}, "3.141592653589793\n", Meta.NONE),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))

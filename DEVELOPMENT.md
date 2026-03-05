@@ -1,10 +1,11 @@
 # TODO
 
 - Add a view with an animated trace, with the current state visible. Maybe the old
-  state flies away ? Requires adding Call and Return info to the packed trace
+  state flies away ?
 
 ## Maybe
 
+- Add exceptions raised in history
 - Localized README. [English](README.md) | [Français](README.fr.md)
 - Tests depend on current locale
 - Speed control / Manual nav / Automaticaly determine the best animation length

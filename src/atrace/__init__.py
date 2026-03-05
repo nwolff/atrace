@@ -3,6 +3,7 @@ import inspect
 import sys
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
+from enum import IntEnum, auto
 from itertools import groupby
 from operator import itemgetter
 from types import FrameType, ModuleType, TracebackType
@@ -265,13 +266,19 @@ class Var:
     name: str
 
 
+class Meta(IntEnum):
+    NONE = 0
+    CALL = auto()
+    RETURN = auto()
+
+
 UNASSIGN = object()
 
 Assignments: TypeAlias = dict[Var, Any]
 
-UnpackedHistory: TypeAlias = Iterable[tuple[Loc, Assignments | str]]
+UnpackedHistory: TypeAlias = Iterable[tuple[Loc, Assignments | str, Meta]]
 
-HistoryItem: TypeAlias = tuple[Loc, Assignments, str | None]
+HistoryItem: TypeAlias = tuple[Loc, Assignments, str | None, Meta]
 History: TypeAlias = list[HistoryItem]
 
 
@@ -314,7 +321,7 @@ def _trace_to_unpacked_history(trace: Trace) -> UnpackedHistory:
                 activations.append(Activation(locs, None))
                 # Capture the function bindings,
                 local_assignments = diff(loc.function_name, {}, locs)
-                yield loc, local_assignments
+                yield loc, local_assignments, Meta.CALL
 
             case Line(globs, locs) | Return(globs, locs):
                 activation = activations[-1]
@@ -322,8 +329,9 @@ def _trace_to_unpacked_history(trace: Trace) -> UnpackedHistory:
                 global_assignments = diff("<module>", current_globals, globs)
                 assignments = local_assignments | global_assignments
 
+                meta = Meta.RETURN if isinstance(event, Return) else Meta.NONE
                 if activation.loc_awaiting_assignments:
-                    yield activation.loc_awaiting_assignments, assignments
+                    yield activation.loc_awaiting_assignments, assignments, meta
 
                 activation.locals = locs
                 current_globals = globs
@@ -333,42 +341,44 @@ def _trace_to_unpacked_history(trace: Trace) -> UnpackedHistory:
                     activations.pop()
 
             case Output(text):
-                yield loc, text
+                yield loc, text, Meta.NONE
 
 
 def _join_outputs(unpacked: UnpackedHistory) -> Iterable[HistoryItem]:
     """
     Coalesce consecutive events that occur on the same line: outputs, assignments
     """
+
     for loc, group in groupby(unpacked, key=itemgetter(0)):
         pending_output = None
-
-        for _, item in group:
+        for _, item, meta in group:
             if isinstance(item, str):
                 pending_output = (pending_output or "") + item
             else:
-                yield loc, item, pending_output
+                yield loc, item, pending_output, meta
                 pending_output = None
 
         if pending_output:
-            yield loc, {}, pending_output
+            yield loc, {}, pending_output, Meta.NONE
 
 
-def _filter_zero_lines(history: History) -> History:
+def _filter_artifacts(history: History) -> History:
     """
-    An artifact of tracing is events that happen before line 1 of the program is run
+    Two artifacts:
+    - The call at line 0
+    - The last line that is a return of code that the user doesn't know about
     """
-    return [
-        (loc, assignments, output)
-        for loc, assignments, output in history
-        if loc.line_no != 0
-    ]
+    if len(history) < 2:
+        return history
+    loc, assignments, output, _ = history[-1]
+    cleaned_last = (loc, assignments, output, Meta.NONE)
+    return history[1:-1] + [cleaned_last]
 
 
 def trace_to_history(trace: Trace) -> History:
     unpacked = _trace_to_unpacked_history(trace)
     joined = list(_join_outputs(unpacked))
-    return _filter_zero_lines(joined)  # Always remove these artifacts
+    return _filter_artifacts(joined)
 
 
 ###############################################################################

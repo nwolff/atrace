@@ -66,23 +66,24 @@ def _human_double_quote(data):
     return re.sub(pattern, '"', text)
 
 
-def _filter_function_assignment(history: History) -> History:
-    def _remove_functions(assignments: Assignments) -> Assignments:
-        """Remove variables that contain functions the given assignments."""
-        return {var: val for var, val in assignments.items() if not callable(val)}
+def remove_functions(assignments: Assignments) -> Assignments:
+    """Remove variables that contain functions the given assignments."""
+    return {var: val for var, val in assignments.items() if not callable(val)}
 
+
+def _filter_function_assignment(history: History) -> History:
     """Remove variables that contain functions from the assignments in History."""
     return [
-        (loc, _remove_functions(assignments), output)
-        for loc, assignments, output in history
+        (loc, remove_functions(assignments), output, meta)
+        for loc, assignments, output, meta in history
     ]
 
 
 def _filter_no_effect(history: History) -> History:
     """Remove history items that neither assign nor output."""
     return [
-        (loc, assignments, output)
-        for loc, assignments, output in history
+        (loc, assignments, output, meta)
+        for loc, assignments, output, meta in history
         if assignments or output
     ]
 
@@ -96,7 +97,7 @@ def history_to_table_data(history: History) -> TableData:
     # Prepare:
     # - Collect all variables in order of appearance.
     # - Determine if we need an output column in the table.
-    for _, assignments, output in history:
+    for _, assignments, output, _ in history:
         for variable in assignments or []:
             if variable not in all_variables:
                 all_variables.append(variable)
@@ -112,7 +113,7 @@ def history_to_table_data(history: History) -> TableData:
 
     # Build rows
     rows = []
-    for loc, assignments, output in history:
+    for loc, assignments, output, _ in history:
         row: RowData = []
         rows.append(row)
 

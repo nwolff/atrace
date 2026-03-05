@@ -30,7 +30,7 @@ ExecutionsPerLine: TypeAlias = dict[int, int]
 
 def line_histogram(history: History) -> ExecutionsPerLine:
     result: ExecutionsPerLine = defaultdict(int)
-    for loc, _, _ in history:
+    for loc, _, _, _ in history:
         result[loc.line_no] += 1
     return result
 

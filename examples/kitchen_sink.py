@@ -1,5 +1,3 @@
-import atrace  # noqa
-
 x, y = 3, 6
 
 while x < y:
@@ -7,12 +5,11 @@ while x < y:
 
 print("x", x)
 
-t = (1, 2)
+t = 1, 2
 
 kids = ["riri", "fifi", "loulou"]
 while kids:
     print(kids.pop(0))
-
 
 lst = [x**2 for x in range(4)]
 
@@ -21,14 +18,6 @@ print(add(5, 3))
 
 for i in range(3):
     print(i)
-
-
-def double(a):
-    b = a * 2
-    return b
-
-
-print(double(6))
 
 
 def recursive_count(x):
@@ -42,5 +31,16 @@ print(recursive_count(4))
 
 answer = input("question: ")
 print(answer)
+
+
+def countdown(n):
+    while n > 0:
+        yield n
+        n -= 1
+
+
+for num in countdown(4):
+    print(num)
+
 
 raise Exception("an exception")

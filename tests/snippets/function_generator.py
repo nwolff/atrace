@@ -7,5 +7,5 @@ def countdown(n):
         n -= 1
 
 
-for num in countdown(2):
+for num in countdown(1):
     print(num)

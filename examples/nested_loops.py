@@ -1,6 +1,3 @@
-import atrace  # noqa
-
-
 def is_zero(x):
     if x == 0:
         print("zero")

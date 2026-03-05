@@ -7,6 +7,7 @@ from atrace import (
     ExceptionOccurred,
     Line,
     Loc,
+    Meta,
     Output,
     Return,
     Var,
@@ -39,9 +40,9 @@ class TestAbruptTermination(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 2), {}, None),
-            (Loc("<module>", 4), {Var("<module>", "x"): 1}, None),
-            (Loc("<module>", 6), {}, None),
+            (Loc("<module>", 2), {}, None, Meta.NONE),
+            (Loc("<module>", 4), {Var("<module>", "x"): 1}, None, Meta.NONE),
+            (Loc("<module>", 6), {}, None, Meta.NONE),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -52,10 +53,10 @@ class TestAbruptTermination(unittest.TestCase):
             from .snippets import uncaught_exception  # noqa
 
         expected_history = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 3), {}, "hai\n"),
-            (Loc("<module>", 4), {Var("<module>", "x"): 1}, None),
-            (Loc("<module>", 5), {}, None),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (Loc("<module>", 3), {}, "hai\n", Meta.NONE),
+            (Loc("<module>", 4), {Var("<module>", "x"): 1}, None, Meta.NONE),
+            (Loc("<module>", 5), {}, None, Meta.NONE),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -82,10 +83,15 @@ class TestAbruptTermination(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 1), {}, None),
-            (Loc("<module>", 3), {}, None),
-            (Loc("<module>", 4), {}, None),
-            (Loc("<module>", 5), {Var("<module>", "e"): mock.ANY}, None),
-            (Loc("<module>", 6), {Var("<module>", "e"): UNASSIGN}, "error message\n"),
+            (Loc("<module>", 1), {}, None, Meta.NONE),
+            (Loc("<module>", 3), {}, None, Meta.NONE),
+            (Loc("<module>", 4), {}, None, Meta.NONE),
+            (Loc("<module>", 5), {Var("<module>", "e"): mock.ANY}, None, Meta.NONE),
+            (
+                Loc("<module>", 6),
+                {Var("<module>", "e"): UNASSIGN},
+                "error message\n",
+                Meta.NONE,
+            ),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))

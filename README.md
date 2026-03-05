@@ -82,6 +82,4 @@ Tested with:
 - Multi-module programs
 - Debuggers
 - Classes
-- Variables containing functions
 - Context managers
-- Generators
