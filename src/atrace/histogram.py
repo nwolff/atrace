@@ -14,7 +14,7 @@ from rich.console import Console
 from rich.padding import Padding
 from rich.table import Table
 
-from . import History, Loc, Trace, trace_code, trace_to_history
+from . import History, Trace, trace_code, trace_to_history
 from .code import (
     CODE_VIEW_WIDTH,
     NumberedLines,
@@ -30,13 +30,13 @@ ExecutionsPerLine: TypeAlias = dict[int, int]
 
 def line_histogram(history: History) -> ExecutionsPerLine:
     result: ExecutionsPerLine = defaultdict(int)
-    for loc, _, _, _ in history:
-        result[loc.line_no] += 1
+    for lineno, _, _, _ in history:
+        result[lineno] += 1
     return result
 
 
 def generate_histogram_display(
-    numbered_lines: NumberedLines, history: History, current_loc: Loc | None = None
+    numbered_lines: NumberedLines, history: History, current_lineno: int | None = None
 ) -> Table:
     executions_per_line = line_histogram(history)
     max_executions = max(executions_per_line.values()) if executions_per_line else 1
@@ -45,8 +45,8 @@ def generate_histogram_display(
     table.add_column("Hits", width=int(math.log10(max_executions)) + 2, justify="right")
     table.add_column("Bar", width=30)
 
-    for line_number, line in visible_lines(numbered_lines, current_loc):
-        num_executions = executions_per_line.get(line_number, 0)
+    for lineno, line in visible_lines(numbered_lines, current_lineno):
+        num_executions = executions_per_line.get(lineno, 0)
         line_bar = Bar(
             begin=0,
             end=num_executions,
@@ -60,7 +60,7 @@ def generate_histogram_display(
 
 
 def generate_code_and_histogram_display(
-    numbered_lines: NumberedLines, history: History, current_loc: Loc | None = None
+    numbered_lines: NumberedLines, history: History, current_lineno: int | None = None
 ):
     grid = Table.grid(padding=(0, 0))
     grid.add_column(
@@ -69,8 +69,8 @@ def generate_code_and_histogram_display(
     grid.add_column()
 
     grid.add_row(
-        generate_code_display(numbered_lines, history, current_loc),
-        generate_histogram_display(numbered_lines, history, current_loc),
+        generate_code_display(numbered_lines, history, current_lineno),
+        generate_histogram_display(numbered_lines, history, current_lineno),
     )
     # (top, right, bottom, left)
     padded_grid = Padding(grid, (1, 0, 1, 0))

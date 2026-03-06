@@ -8,7 +8,7 @@ from rich.console import Console
 from rich.syntax import Syntax
 from rich.table import Table
 
-from . import History, Loc, Trace, trace_code, trace_to_history
+from . import History, Trace, trace_code, trace_to_history
 from .tool_support import NumberedLines, add_line_numbers, visible_lines
 
 INTENSE_COLOR = 0, 0, 255
@@ -29,16 +29,16 @@ def color_for_intensity(intensity: float) -> str:
 
 
 def generate_code_display(
-    numbered_lines: NumberedLines, history: History, current_loc: Loc | None = None
+    numbered_lines: NumberedLines, history: History, current_lineno: int | None = None
 ) -> Table:
 
-    if current_loc:
+    if current_lineno:
         recent_history = history[-TAIL_SIZE:]
         num_items = len(recent_history)
         scale = 1.0 / num_items if num_items > 0 else 1.0
         trail = {
-            loc.line_no: color_for_intensity((index + 1) * scale)
-            for index, (loc, _, _, _) in enumerate(recent_history)
+            lineno: color_for_intensity((index + 1) * scale)
+            for index, (lineno, _, _, _) in enumerate(recent_history)
         }
     else:
         trail = {}
@@ -46,18 +46,16 @@ def generate_code_display(
     table = Table(show_header=False, box=None)
     table.add_column("Code", width=CODE_VIEW_WIDTH)
 
-    active_line = current_loc.line_no if current_loc else None
-
-    for line_number, line in visible_lines(numbered_lines, current_loc):
+    for lineno, line in visible_lines(numbered_lines, current_lineno):
         syntax_line = Syntax(
             line,
             "python",
             theme="ansi_light",
             word_wrap=False,
             line_numbers=True,
-            start_line=line_number,
-            background_color=trail.get(line_number),
-            highlight_lines={line_number} if line_number == active_line else None,
+            start_line=lineno,
+            background_color=trail.get(lineno),
+            highlight_lines={lineno} if lineno == current_lineno else None,
         )
 
         table.add_row(syntax_line)

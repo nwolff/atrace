@@ -35,12 +35,6 @@ The models and classes that collect the trace.
 """
 
 
-@dataclass(frozen=True)
-class Loc:
-    function_name: str
-    line_no: int
-
-
 Symbols: TypeAlias = dict[str, Any]
 
 
@@ -68,6 +62,8 @@ class Call(ExecutionEvent):
         - The function name
         - The bound parameters
     """
+
+    function_name: str
 
 
 @dataclass(frozen=True)
@@ -101,7 +97,7 @@ class Output:
 
 Event: TypeAlias = Line | Call | Return | ExceptionOccurred | Output
 
-Trace: TypeAlias = list[tuple[Loc, Event]]
+Trace: TypeAlias = list[tuple[int, Event]]
 
 DoneCallback = Callable[[Trace], None]
 
@@ -156,7 +152,7 @@ class OutputLogger:
         self.stdout.write(text)
 
         frame = sys._getframe(1)
-        self.trace.append((Loc(frame.f_code.co_name, frame.f_lineno), Output(text)))
+        self.trace.append((frame.f_lineno, Output(text)))
 
     def flush(self):
         self.stdout.flush()
@@ -210,7 +206,9 @@ class Tracer:
             case "line":
                 trace_event = Line(globals=globs, locals=locs)
             case "call":
-                trace_event = Call(globals=globs, locals=locs)
+                trace_event = Call(
+                    globals=globs, locals=locs, function_name=frame.f_code.co_name
+                )
             case "return":
                 trace_event = Return(globals=globs, locals=locs, return_value=arg)
             case "exception":
@@ -225,7 +223,7 @@ class Tracer:
                 pass
 
         if trace_event:
-            self.trace.append((Loc(frame.f_code.co_name, frame.f_lineno), trace_event))
+            self.trace.append((frame.f_lineno, trace_event))
 
         # Detect if we are leaving the module we wanted to trace.
         # Unload if the job is done.
@@ -276,16 +274,17 @@ UNASSIGN = object()
 
 Assignments: TypeAlias = dict[Var, Any]
 
-UnpackedHistory: TypeAlias = Iterable[tuple[Loc, Assignments | str, Meta]]
+UnpackedHistory: TypeAlias = Iterable[tuple[int, Assignments | str, Meta]]
 
-HistoryItem: TypeAlias = tuple[Loc, Assignments, str | None, Meta]
+HistoryItem: TypeAlias = tuple[int, Assignments, str | None, Meta]
 History: TypeAlias = list[HistoryItem]
 
 
 @dataclass
 class Activation:
+    function_name: str
     locals: Symbols
-    loc_awaiting_assignments: Loc | None
+    lineno_awaiting_assignments: int | None
 
 
 def diff(scope: str, before: Symbols, after: Symbols) -> Assignments:
@@ -313,35 +312,37 @@ def _trace_to_unpacked_history(trace: Trace) -> UnpackedHistory:
     """
 
     current_globals: Symbols = {}
-    activations = [Activation({}, Loc("guard", 0))]
+    activations = [Activation("guard", {}, None)]
 
-    for loc, event in trace:
+    for lineno, event in trace:
         match event:
-            case Call(_, locs):
-                activations.append(Activation(locs, None))
+            case Call(_, locs, function_name):
+                activations.append(Activation(function_name, locs, None))
                 # Capture the function bindings,
-                local_assignments = diff(loc.function_name, {}, locs)
-                yield loc, local_assignments, Meta.CALL
+                local_assignments = diff(function_name, {}, locs)
+                yield lineno, local_assignments, Meta.CALL
 
             case Line(globs, locs) | Return(globs, locs):
                 activation = activations[-1]
-                local_assignments = diff(loc.function_name, activation.locals, locs)
+                local_assignments = diff(
+                    activation.function_name, activation.locals, locs
+                )
                 global_assignments = diff("<module>", current_globals, globs)
                 assignments = local_assignments | global_assignments
 
                 meta = Meta.RETURN if isinstance(event, Return) else Meta.NONE
-                if activation.loc_awaiting_assignments:
-                    yield activation.loc_awaiting_assignments, assignments, meta
+                if activation.lineno_awaiting_assignments:
+                    yield activation.lineno_awaiting_assignments, assignments, meta
 
                 activation.locals = locs
                 current_globals = globs
                 if isinstance(event, Line):
-                    activation.loc_awaiting_assignments = loc
+                    activation.lineno_awaiting_assignments = lineno
                 elif isinstance(event, Return):
                     activations.pop()
 
             case Output(text):
-                yield loc, text, Meta.NONE
+                yield lineno, text, Meta.NONE
 
 
 def _join_outputs(unpacked: UnpackedHistory) -> Iterable[HistoryItem]:
@@ -349,17 +350,17 @@ def _join_outputs(unpacked: UnpackedHistory) -> Iterable[HistoryItem]:
     Coalesce consecutive events that occur on the same line: outputs, assignments
     """
 
-    for loc, group in groupby(unpacked, key=itemgetter(0)):
+    for lineno, group in groupby(unpacked, key=itemgetter(0)):
         pending_output = None
         for _, item, meta in group:
             if isinstance(item, str):
                 pending_output = (pending_output or "") + item
             else:
-                yield loc, item, pending_output, meta
+                yield lineno, item, pending_output, meta
                 pending_output = None
 
         if pending_output:
-            yield loc, {}, pending_output, Meta.NONE
+            yield lineno, {}, pending_output, Meta.NONE
 
 
 def _filter_artifacts(history: History) -> History:
@@ -370,8 +371,8 @@ def _filter_artifacts(history: History) -> History:
     """
     if len(history) < 2:
         return history
-    loc, assignments, output, _ = history[-1]
-    cleaned_last = (loc, assignments, output, Meta.NONE)
+    lineno, assignments, output, _ = history[-1]
+    cleaned_last = (lineno, assignments, output, Meta.NONE)
     return history[1:-1] + [cleaned_last]
 
 

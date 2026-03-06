@@ -113,11 +113,11 @@ def history_to_table_data(history: History) -> TableData:
 
     # Build rows
     rows = []
-    for loc, assignments, output, _ in history:
+    for lineno, assignments, output, _ in history:
         row: RowData = []
         rows.append(row)
 
-        row.append(str(loc.line_no))
+        row.append(str(lineno))
 
         for variable in all_variables:
             if variable in assignments:

@@ -6,7 +6,6 @@ from atrace import (
     Call,
     ExceptionOccurred,
     Line,
-    Loc,
     Meta,
     Output,
     Return,
@@ -27,22 +26,22 @@ class TestAbruptTermination(unittest.TestCase):
             from .snippets import syntax_error  # noqa
 
         expected_trace = [
-            (Loc("<module>", 0), Call({}, {})),
-            (Loc("<module>", 2), Line({}, {})),
-            (Loc("<module>", 4), Line({}, {})),
-            (Loc("<module>", 6), Line({"x": 1}, {})),
+            (0, Call({}, {}, "<module>")),
+            (2, Line({}, {})),
+            (4, Line({}, {})),
+            (6, Line({"x": 1}, {})),
             (
-                Loc("<module>", 6),
+                6,
                 ExceptionOccurred({"x": 1}, {}, mock.ANY, mock.ANY, mock.ANY),
             ),
-            (Loc("<module>", 6), Return({"x": 1}, {}, None)),
+            (6, Return({"x": 1}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 2), {}, None, Meta.NONE),
-            (Loc("<module>", 4), {Var("<module>", "x"): 1}, None, Meta.NONE),
-            (Loc("<module>", 6), {}, None, Meta.NONE),
+            (2, {}, None, Meta.NONE),
+            (4, {Var("<module>", "x"): 1}, None, Meta.NONE),
+            (6, {}, None, Meta.NONE),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -53,10 +52,10 @@ class TestAbruptTermination(unittest.TestCase):
             from .snippets import uncaught_exception  # noqa
 
         expected_history = [
-            (Loc("<module>", 1), {}, None, Meta.NONE),
-            (Loc("<module>", 3), {}, "hai\n", Meta.NONE),
-            (Loc("<module>", 4), {Var("<module>", "x"): 1}, None, Meta.NONE),
-            (Loc("<module>", 5), {}, None, Meta.NONE),
+            (1, {}, None, Meta.NONE),
+            (3, {}, "hai\n", Meta.NONE),
+            (4, {Var("<module>", "x"): 1}, None, Meta.NONE),
+            (5, {}, None, Meta.NONE),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -66,29 +65,29 @@ class TestAbruptTermination(unittest.TestCase):
         from .snippets import caught_exception  # noqa
 
         expected_trace = [
-            (Loc("<module>", 0), Call({}, {})),
-            (Loc("<module>", 1), Line({}, {})),
-            (Loc("<module>", 3), Line({}, {})),
-            (Loc("<module>", 4), Line({}, {})),
+            (0, Call({}, {}, "<module>")),
+            (1, Line({}, {})),
+            (3, Line({}, {})),
+            (4, Line({}, {})),
             (
-                Loc("<module>", 4),
+                4,
                 ExceptionOccurred({}, {}, mock.ANY, mock.ANY, mock.ANY),
             ),
-            (Loc("<module>", 5), Line({}, {})),
-            (Loc("<module>", 6), Line({"e": mock.ANY}, {})),
-            (Loc("<module>", 6), Output("error message")),
-            (Loc("<module>", 6), Output("\n")),
-            (Loc("<module>", 6), Return({}, {}, None)),
+            (5, Line({}, {})),
+            (6, Line({"e": mock.ANY}, {})),
+            (6, Output("error message")),
+            (6, Output("\n")),
+            (6, Return({}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (Loc("<module>", 1), {}, None, Meta.NONE),
-            (Loc("<module>", 3), {}, None, Meta.NONE),
-            (Loc("<module>", 4), {}, None, Meta.NONE),
-            (Loc("<module>", 5), {Var("<module>", "e"): mock.ANY}, None, Meta.NONE),
+            (1, {}, None, Meta.NONE),
+            (3, {}, None, Meta.NONE),
+            (4, {}, None, Meta.NONE),
+            (5, {Var("<module>", "e"): mock.ANY}, None, Meta.NONE),
             (
-                Loc("<module>", 6),
+                6,
                 {Var("<module>", "e"): UNASSIGN},
                 "error message\n",
                 Meta.NONE,

@@ -7,7 +7,7 @@ import argparse
 from rich.padding import Padding
 from rich.table import Table
 
-from . import History, Loc, Trace, trace_code, trace_to_history
+from . import History, Trace, trace_code, trace_to_history
 from .code import CODE_VIEW_WIDTH, generate_code_display
 from .reporter import (
     history_to_table,
@@ -16,7 +16,7 @@ from .tool_support import NumberedLines, add_line_numbers, animate
 
 
 def generate_code_and_trace_display(
-    numbered_lines: NumberedLines, history: History, current_loc: Loc | None = None
+    numbered_lines: NumberedLines, history: History, current_lineno: int | None = None
 ):
     grid = Table.grid(padding=(0, 0))
     grid.add_column(
@@ -25,8 +25,8 @@ def generate_code_and_trace_display(
     grid.add_column()
 
     grid.add_row(
-        generate_code_display(numbered_lines, history, current_loc),
-        generate_trace_display(numbered_lines, history, current_loc),
+        generate_code_display(numbered_lines, history, current_lineno),
+        generate_trace_display(numbered_lines, history, current_lineno),
     )
     # (top, right, bottom, left)
     padded_grid = Padding(grid, (1, 0, 1, 0))
@@ -35,7 +35,7 @@ def generate_code_and_trace_display(
 
 
 def generate_trace_display(
-    numbered_lines: NumberedLines, history: History, current_loc: Loc | None = None
+    _numbered_lines: NumberedLines, history: History, _current_lineno: int | None = None
 ) -> Table:
     return history_to_table(history)
 

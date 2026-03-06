@@ -4,7 +4,7 @@ from unittest import mock
 
 from rich.console import Console
 
-from atrace import UNASSIGN, History, Loc, Meta, Var
+from atrace import UNASSIGN, History, Meta, Var
 from atrace.reporter import history_to_table, history_to_table_data
 
 
@@ -19,10 +19,10 @@ def capture_report(history: History) -> str:
 class TestReporter(unittest.TestCase):
     def test_all_assignments(self):
         history: History = [
-            (Loc("<module>", 3), {Var("<module>", "x"): 1}, None, Meta.NONE),
-            (Loc("<module>", 4), {Var("<module>", "x"): None}, None, Meta.NONE),
-            (Loc("<module>", 5), {Var("<module>", "x"): UNASSIGN}, None, Meta.NONE),
-            (Loc("<module>", 6), {Var("<module>", "x"): "bob"}, None, Meta.NONE),
+            (3, {Var("<module>", "x"): 1}, None, Meta.NONE),
+            (4, {Var("<module>", "x"): None}, None, Meta.NONE),
+            (5, {Var("<module>", "x"): UNASSIGN}, None, Meta.NONE),
+            (6, {Var("<module>", "x"): "bob"}, None, Meta.NONE),
         ]
         expected_table_data = (
             ["line", "x"],
@@ -37,8 +37,8 @@ class TestReporter(unittest.TestCase):
 
     def test_with_output(self):
         history = [
-            (Loc("<module>", 3), {Var("<module>", "x"): 1}, None, Meta.NONE),
-            (Loc("<module>", 4), {}, "1\n", Meta.NONE),
+            (3, {Var("<module>", "x"): 1}, None, Meta.NONE),
+            (4, {}, "1\n", Meta.NONE),
         ]
         expected_table_data = (
             ["line", "x", "output"],
@@ -49,14 +49,14 @@ class TestReporter(unittest.TestCase):
     def test_with_functions(self):
         history: History = [
             (
-                Loc("<module>", 4),
+                4,
                 {Var("<module>", "double"): mock.ANY},
                 None,
                 Meta.NONE,
             ),
-            (Loc("double", 4), {Var("double", "a"): 3}, None, Meta.NONE),
-            (Loc("double", 5), {Var("double", "result"): 6}, None, Meta.NONE),
-            (Loc("<module>", 9), {Var("<module>", "x"): 6}, None, Meta.NONE),
+            (4, {Var("double", "a"): 3}, None, Meta.NONE),
+            (5, {Var("double", "result"): 6}, None, Meta.NONE),
+            (9, {Var("<module>", "x"): 6}, None, Meta.NONE),
         ]
         expected_table_data = (
             ["line", "double", "(double) a", "(double) result", "x"],
@@ -72,23 +72,23 @@ class TestReporter(unittest.TestCase):
     def test_display(self):
         history: History = [
             (
-                Loc("<module>", 3),
+                3,
                 {Var("<module>", "x"): 1, Var("<module>", "y"): 3},
                 None,
                 Meta.NONE,
             ),
-            (Loc("<module>", 6), {Var("<module>", "x"): 2}, None, Meta.NONE),
-            (Loc("<module>", 6), {Var("<module>", "x"): 3}, None, Meta.NONE),
-            (Loc("<module>", 8), {}, "x: 3\n", Meta.NONE),
-            (Loc("<module>", 10), {Var("<module>", "t"): (1, "a")}, None, Meta.NONE),
-            (Loc("greet", 13), {Var("greet", "name"): "Bob"}, None, Meta.NONE),
+            (6, {Var("<module>", "x"): 2}, None, Meta.NONE),
+            (6, {Var("<module>", "x"): 3}, None, Meta.NONE),
+            (8, {}, "x: 3\n", Meta.NONE),
+            (10, {Var("<module>", "t"): (1, "a")}, None, Meta.NONE),
+            (13, {Var("greet", "name"): "Bob"}, None, Meta.NONE),
             (
-                Loc("greet", 14),
+                14,
                 {Var("greet", "message"): "Hello Bob!"},
                 None,
                 Meta.NONE,
             ),
-            (Loc("<module>", 18), {}, "Hello Bob!\n", Meta.NONE),
+            (18, {}, "Hello Bob!\n", Meta.NONE),
         ]
         expected_result = """\
         ╭───────┬────┬────┬───────────┬───────────────┬──────────────────┬─────────────╮
