@@ -10,7 +10,7 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from . import UNASSIGN, Assignments, History, Var
+from . import UNASSIGN, Assignments, Call, History, Line, Var
 
 # Make localization work in thonny:
 # Thonny does not pass environment variables to the running program,
@@ -73,36 +73,51 @@ def remove_functions(assignments: Assignments) -> Assignments:
 
 def _filter_function_assignment(history: History) -> History:
     """Remove variables that contain functions from the assignments in History."""
-    return [
-        (loc, remove_functions(assignments), output, meta)
-        for loc, assignments, output, meta in history
-    ]
+    result: History = []
+    for lineno, item in history:
+        match item:
+            case Call(function_name, bindings):
+                result.append((lineno, Call(function_name, remove_functions(bindings))))
+            case Line(assignments, output):
+                result.append((lineno, Line(remove_functions(assignments), output)))
+            case _:
+                result.append((lineno, item))
+    return result
 
 
 def _filter_no_effect(history: History) -> History:
     """Remove history items that neither assign nor output."""
-    return [
-        (loc, assignments, output, meta)
-        for loc, assignments, output, meta in history
-        if assignments or output
-    ]
+    result: History = []
+    for lineno, item in history:
+        match item:
+            case Line(assignments, output):
+                if assignments or output:
+                    result.append((lineno, item))
+            case _:
+                result.append((lineno, item))
+    return result
 
 
 def history_to_table_data(history: History) -> TableData:
     history = _filter_function_assignment(history)
     history = _filter_no_effect(history)
-    all_variables = []
-    history_has_output = False
 
     # Prepare:
     # - Collect all variables in order of appearance.
     # - Determine if we need an output column in the table.
-    for _, assignments, output, _ in history:
-        for variable in assignments or []:
-            if variable not in all_variables:
-                all_variables.append(variable)
-        if output:
-            history_has_output = True
+    raw_vars: list[Any] = []
+    history_has_output = False
+    for _, item in history:
+        match item:
+            case Call(_, bindings):
+                raw_vars.extend(bindings)
+            case Line(assignments, output):
+                raw_vars.extend(assignments)
+                if output:
+                    history_has_output = True
+
+    # dict.fromkeys() removes duplicates and preserves the order of appearance
+    all_variables = list(dict.fromkeys(raw_vars))
 
     # Build headers
     headers = [LINE]
@@ -113,21 +128,28 @@ def history_to_table_data(history: History) -> TableData:
 
     # Build rows
     rows = []
-    for lineno, assignments, output, _ in history:
-        row: RowData = []
-        rows.append(row)
+    for lineno, item in history:
+        match item:
+            case Call(_, bindings):
+                item_assignments = bindings
+            case Line(assignments, output):
+                item_assignments = assignments
+            case _:
+                item_assignments = {}
 
-        row.append(str(lineno))
-
+        row: RowData = [str(lineno)]
         for variable in all_variables:
-            if variable in assignments:
-                content = format_value(assignments[variable])
+            if variable in item_assignments:
+                content = format_value(item_assignments[variable])
             else:
                 content = None
             row.append(content)
 
         if history_has_output:
             row.append(format_output(output))
+
+        if item_assignments or output:  # This is a weird way to do things
+            rows.append(row)
 
     return headers, rows
 

@@ -1,3 +1,4 @@
 import atrace  # noqa
 
-print("hello")
+print("hello", "world!")
+print("goodbye")

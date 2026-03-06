@@ -38,7 +38,7 @@ def generate_code_display(
         scale = 1.0 / num_items if num_items > 0 else 1.0
         trail = {
             lineno: color_for_intensity((index + 1) * scale)
-            for index, (lineno, _, _, _) in enumerate(recent_history)
+            for index, (lineno, _) in enumerate(recent_history)
         }
     else:
         trail = {}

@@ -4,9 +4,11 @@ from unittest import mock
 from atrace import (
     Call,
     Line,
-    Meta,
-    Output,
     Return,
+    TCall,
+    TLine,
+    TOutput,
+    TReturn,
     Var,
     trace_next_loaded_module,
     trace_to_history,
@@ -22,30 +24,28 @@ class TestFunctions(unittest.TestCase):
         from .snippets import function  # noqa
 
         expected_trace = [
-            (0, Call({}, {}, "<module>")),
-            (1, Line({}, {})),
-            (4, Line({}, {})),
-            (9, Line({"double": mock.ANY}, {})),
-            (4, Call({"double": mock.ANY}, {"a": 3}, function_name="double")),
-            (5, Line({"double": mock.ANY}, {"a": 3})),
-            (6, Line({"double": mock.ANY}, {"a": 3, "result": 6})),
-            (6, Return({"double": mock.ANY}, {"a": 3, "result": 6}, 6)),
-            (9, Return({"double": mock.ANY, "x": 6}, {}, None)),
+            (0, TCall({}, {}, "<module>")),
+            (1, TLine({}, {})),
+            (4, TLine({}, {})),
+            (9, TLine({"double": mock.ANY}, {})),
+            (4, TCall({"double": mock.ANY}, {"a": 3}, "double")),
+            (5, TLine({"double": mock.ANY}, {"a": 3})),
+            (6, TLine({"double": mock.ANY}, {"a": 3, "result": 6})),
+            (6, TReturn({"double": mock.ANY}, {"a": 3, "result": 6}, 6)),
+            (9, TReturn({"double": mock.ANY, "x": 6}, {}, None)),
         ]
+
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, {}, None, Meta.NONE),
-            (
-                4,
-                {Var("<module>", "double"): mock.ANY},
-                None,
-                Meta.NONE,
-            ),
-            (4, {Var("double", "a"): 3}, None, Meta.CALL),
-            (5, {Var("double", "result"): 6}, None, Meta.NONE),
-            (6, {}, None, Meta.RETURN),
-            (9, {Var("<module>", "x"): 6}, None, Meta.NONE),
+            (1, Line({}, None)),
+            (4, Line({Var("<module>", "double"): mock.ANY}, None)),
+            (9, Line({}, None)),
+            (4, Call("double", {Var("double", "a"): 3})),
+            (5, Line({Var("double", "result"): 6}, None)),
+            (6, Line({}, None)),
+            (6, Return(6)),
+            (9, Line({Var("<module>", "x"): 6}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -54,30 +54,27 @@ class TestFunctions(unittest.TestCase):
         from .snippets import function_assign_before_call  # noqa
 
         expected_trace = [
-            (0, Call({}, {}, "<module>")),
-            (1, Line({}, {})),
-            (4, Line({}, {})),
-            (8, Line({"double": mock.ANY}, {})),
-            (9, Line({"double": mock.ANY, "x": 3}, {})),
-            (4, Call({"double": mock.ANY, "x": 3}, {"a": 5}, function_name="double")),
-            (5, Line({"double": mock.ANY, "x": 3}, {"a": 5})),
-            (5, Return({"double": mock.ANY, "x": 3}, {"a": 5}, 10)),
-            (9, Return({"double": mock.ANY, "x": 10}, {}, None)),
+            (0, TCall({}, {}, "<module>")),
+            (1, TLine({}, {})),
+            (4, TLine({}, {})),
+            (8, TLine({"double": mock.ANY}, {})),
+            (9, TLine({"double": mock.ANY, "x": 3}, {})),
+            (4, TCall({"double": mock.ANY, "x": 3}, {"a": 5}, "double")),
+            (5, TLine({"double": mock.ANY, "x": 3}, {"a": 5})),
+            (5, TReturn({"double": mock.ANY, "x": 3}, {"a": 5}, 10)),
+            (9, TReturn({"double": mock.ANY, "x": 10}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, {}, None, Meta.NONE),
-            (
-                4,
-                {Var("<module>", "double"): mock.ANY},
-                None,
-                Meta.NONE,
-            ),
-            (8, {Var("<module>", "x"): 3}, None, Meta.NONE),
-            (4, {Var("double", "a"): 5}, None, Meta.CALL),
-            (5, {}, None, Meta.RETURN),
-            (9, {Var("<module>", "x"): 10}, None, Meta.NONE),
+            (1, Line({}, None)),
+            (4, Line({Var("<module>", "double"): mock.ANY}, None)),
+            (8, Line({Var("<module>", "x"): 3}, None)),
+            (9, Line({}, None)),
+            (4, Call("double", {Var("double", "a"): 5})),
+            (5, Line({}, None)),
+            (5, Return(10)),
+            (9, Line({Var("<module>", "x"): 10}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -86,32 +83,29 @@ class TestFunctions(unittest.TestCase):
         from .snippets import function_modifying_global  # noqa
 
         expected_trace = [
-            (0, Call({}, {}, "<module>")),
-            (1, Line({}, {})),
-            (3, Line({}, {})),
-            (6, Line({"c": "start"}, {})),
-            (12, Line({"c": "start", "f": mock.ANY}, {})),
-            (
-                6,
-                Call(
-                    {"c": "start", "f": mock.ANY}, {"a": 3, "b": 14}, function_name="f"
-                ),
-            ),
-            (8, Line({"c": "start", "f": mock.ANY}, {"a": 3, "b": 14})),
-            (9, Line({"c": 17, "f": mock.ANY}, {"a": 3, "b": 14})),
-            (9, Return({"c": 17, "f": mock.ANY}, {"a": 3, "b": 14}, 17)),
-            (12, Return({"c": 17, "f": mock.ANY, "x": 34}, {}, None)),
+            (0, TCall({}, {}, "<module>")),
+            (1, TLine({}, {})),
+            (3, TLine({}, {})),
+            (6, TLine({"c": "start"}, {})),
+            (12, TLine({"c": "start", "f": mock.ANY}, {})),
+            (6, TCall({"c": "start", "f": mock.ANY}, {"a": 3, "b": 14}, "f")),
+            (8, TLine({"c": "start", "f": mock.ANY}, {"a": 3, "b": 14})),
+            (9, TLine({"c": 17, "f": mock.ANY}, {"a": 3, "b": 14})),
+            (9, TReturn({"c": 17, "f": mock.ANY}, {"a": 3, "b": 14}, 17)),
+            (12, TReturn({"c": 17, "f": mock.ANY, "x": 34}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, {}, None, Meta.NONE),
-            (3, {Var("<module>", "c"): "start"}, None, Meta.NONE),
-            (6, {Var("<module>", "f"): mock.ANY}, None, Meta.NONE),
-            (6, {Var("f", "a"): 3, Var("f", "b"): 14}, None, Meta.CALL),
-            (8, {Var("<module>", "c"): 17}, None, Meta.NONE),
-            (9, {}, None, Meta.RETURN),
-            (12, {Var("<module>", "x"): 34}, None, Meta.NONE),
+            (1, Line({}, None)),
+            (3, Line({Var("<module>", "c"): "start"}, None)),
+            (6, Line({Var("<module>", "f"): mock.ANY}, None)),
+            (12, Line({}, None)),
+            (6, Call("f", {Var("f", "a"): 3, Var("f", "b"): 14})),
+            (8, Line({Var("<module>", "c"): 17}, None)),
+            (9, Line({}, None)),
+            (9, Return(17)),
+            (12, Line({Var("<module>", "x"): 34}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -120,41 +114,29 @@ class TestFunctions(unittest.TestCase):
         from .snippets import function_shadowing_global  # noqa
 
         expected_trace = [
-            (0, Call({}, {}, "<module>")),
-            (1, Line({}, {})),
-            (3, Line({}, {})),
-            (6, Line({"c": "start"}, {})),
-            (11, Line({"c": "start", "f": mock.ANY}, {})),
-            (
-                6,
-                Call(
-                    {"c": "start", "f": mock.ANY}, {"a": 3, "b": 14}, function_name="f"
-                ),
-            ),
-            (7, Line({"c": "start", "f": mock.ANY}, {"a": 3, "b": 14})),
-            (
-                8,
-                Line({"c": "start", "f": mock.ANY}, {"a": 3, "b": 14, "c": 17}),
-            ),
-            (
-                8,
-                Return({"c": "start", "f": mock.ANY}, {"a": 3, "b": 14, "c": 17}, 17),
-            ),
-            (
-                11,
-                Return({"c": "start", "f": mock.ANY, "x": 34}, {}, None),
-            ),
+            (0, TCall({}, {}, "<module>")),
+            (1, TLine({}, {})),
+            (3, TLine({}, {})),
+            (6, TLine({"c": "start"}, {})),
+            (11, TLine({"c": "start", "f": mock.ANY}, {})),
+            (6, TCall({"c": "start", "f": mock.ANY}, {"a": 3, "b": 14}, "f")),
+            (7, TLine({"c": "start", "f": mock.ANY}, {"a": 3, "b": 14})),
+            (8, TLine({"c": "start", "f": mock.ANY}, {"a": 3, "b": 14, "c": 17})),
+            (8, TReturn({"c": "start", "f": mock.ANY}, {"a": 3, "b": 14, "c": 17}, 17)),
+            (11, TReturn({"c": "start", "f": mock.ANY, "x": 34}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, {}, None, Meta.NONE),
-            (3, {Var("<module>", "c"): "start"}, None, Meta.NONE),
-            (6, {Var("<module>", "f"): mock.ANY}, None, Meta.NONE),
-            (6, {Var("f", "a"): 3, Var("f", "b"): 14}, None, Meta.CALL),
-            (7, {Var("f", "c"): 17}, None, Meta.NONE),
-            (8, {}, None, Meta.RETURN),
-            (11, {Var("<module>", "x"): 34}, None, Meta.NONE),
+            (1, Line({}, None)),
+            (3, Line({Var("<module>", "c"): "start"}, None)),
+            (6, Line({Var("<module>", "f"): mock.ANY}, None)),
+            (11, Line({}, None)),
+            (6, Call("f", {Var("f", "a"): 3, Var("f", "b"): 14})),
+            (7, Line({Var("f", "c"): 17}, None)),
+            (8, Line({}, None)),
+            (8, Return(17)),
+            (11, Line({Var("<module>", "x"): 34}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -163,95 +145,89 @@ class TestFunctions(unittest.TestCase):
         from .snippets import function_with_recursion  # noqa
 
         expected_trace = [
-            (0, Call({}, {}, "<module>")),
-            (1, Line({}, {})),
-            (4, Line({}, {})),
-            (8, Line({"sum_up_to": mock.ANY}, {})),
-            (4, Call({"sum_up_to": mock.ANY}, {"x": 2}, function_name="sum_up_to")),
-            (5, Line({"sum_up_to": mock.ANY}, {"x": 2})),
-            (4, Call({"sum_up_to": mock.ANY}, {"x": 1}, function_name="sum_up_to")),
-            (5, Line({"sum_up_to": mock.ANY}, {"x": 1})),
-            (4, Call({"sum_up_to": mock.ANY}, {"x": 0}, function_name="sum_up_to")),
-            (5, Line({"sum_up_to": mock.ANY}, {"x": 0})),
-            (5, Return({"sum_up_to": mock.ANY}, {"x": 0}, 0)),
-            (5, Return({"sum_up_to": mock.ANY}, {"x": 1}, 1)),
-            (5, Return({"sum_up_to": mock.ANY}, {"x": 2}, 3)),
+            (0, TCall({}, {}, "<module>")),
+            (1, TLine({}, {})),
+            (4, TLine({}, {})),
+            (8, TLine({"sum_up_to": mock.ANY}, {})),
+            (4, TCall({"sum_up_to": mock.ANY}, {"x": 2}, "sum_up_to")),
+            (5, TLine({"sum_up_to": mock.ANY}, {"x": 2})),
+            (4, TCall({"sum_up_to": mock.ANY}, {"x": 1}, "sum_up_to")),
+            (5, TLine({"sum_up_to": mock.ANY}, {"x": 1})),
+            (4, TCall({"sum_up_to": mock.ANY}, {"x": 0}, "sum_up_to")),
+            (5, TLine({"sum_up_to": mock.ANY}, {"x": 0})),
+            (5, TReturn({"sum_up_to": mock.ANY}, {"x": 0}, 0)),
+            (5, TReturn({"sum_up_to": mock.ANY}, {"x": 1}, 1)),
+            (5, TReturn({"sum_up_to": mock.ANY}, {"x": 2}, 3)),
             (
                 8,
-                Return({"sum_up_to": mock.ANY, "result": 3}, {}, None),
+                TReturn({"sum_up_to": mock.ANY, "result": 3}, {}, None),
             ),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, {}, None, Meta.NONE),
-            (
-                4,
-                {Var("<module>", "sum_up_to"): mock.ANY},
-                None,
-                Meta.NONE,
-            ),
-            (4, {Var("sum_up_to", "x"): 2}, None, Meta.CALL),
-            (4, {Var("sum_up_to", "x"): 1}, None, Meta.CALL),
-            (4, {Var("sum_up_to", "x"): 0}, None, Meta.CALL),
-            (5, {}, None, Meta.RETURN),
-            (5, {}, None, Meta.RETURN),
-            (5, {}, None, Meta.RETURN),
-            (8, {Var("<module>", "result"): 3}, None, Meta.NONE),
+            (1, Line({}, None)),
+            (4, Line({Var("<module>", "sum_up_to"): mock.ANY}, None)),
+            (8, Line({}, None)),
+            (4, Call("sum_up_to", {Var("sum_up_to", "x"): 2})),
+            (5, Line({}, None)),
+            (4, Call("sum_up_to", {Var("sum_up_to", "x"): 1})),
+            (5, Line({}, None)),
+            (4, Call("sum_up_to", {Var("sum_up_to", "x"): 0})),
+            (5, Line({}, None)),
+            (5, Return(0)),
+            (5, Return(1)),
+            (5, Return(3)),
+            (8, Line({Var("<module>", "result"): 3}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_function_nested(self):
-        """
-        Maybe the surprising thing is when we access y from inner, y appears in scope.
-        This is how the python runtime works.
-        """
         trace_next_loaded_module(self.callback_done)
         from .snippets import function_nested  # noqa
 
         expected_trace = [
-            (0, Call({}, {}, "<module>")),
-            (1, Line({}, {})),
-            (4, Line({}, {})),
-            (14, Line({"outer": mock.ANY}, {})),
-            (4, Call({"outer": mock.ANY}, {"x": 4}, function_name="outer")),
-            (5, Line({"outer": mock.ANY}, {"x": 4})),
-            (7, Line({"outer": mock.ANY}, {"x": 4, "y": 5})),
+            (0, TCall({}, {}, "<module>")),
+            (1, TLine({}, {})),
+            (4, TLine({}, {})),
+            (14, TLine({"outer": mock.ANY}, {})),
+            (4, TCall({"outer": mock.ANY}, {"x": 4}, "outer")),
+            (5, TLine({"outer": mock.ANY}, {"x": 4})),
+            (7, TLine({"outer": mock.ANY}, {"x": 4, "y": 5})),
             (
                 11,
-                Line({"outer": mock.ANY}, {"x": 4, "y": 5, "inner": mock.ANY}),
+                TLine({"outer": mock.ANY}, {"x": 4, "y": 5, "inner": mock.ANY}),
             ),
-            (7, Call({"outer": mock.ANY}, {"a": 8, "y": 5}, function_name="inner")),
-            (8, Line({"outer": mock.ANY}, {"a": 8, "y": 5})),
-            (9, Line({"outer": mock.ANY}, {"a": 8, "x": 13, "y": 5})),
+            (7, TCall({"outer": mock.ANY}, {"a": 8, "y": 5}, "inner")),
+            (8, TLine({"outer": mock.ANY}, {"a": 8, "y": 5})),
+            (9, TLine({"outer": mock.ANY}, {"a": 8, "x": 13, "y": 5})),
             (
                 9,
-                Return({"outer": mock.ANY}, {"a": 8, "x": 13, "y": 5}, 13),
+                TReturn({"outer": mock.ANY}, {"a": 8, "x": 13, "y": 5}, 13),
             ),
             (
                 11,
-                Return({"outer": mock.ANY}, {"x": 4, "y": 5, "inner": mock.ANY}, 13),
+                TReturn({"outer": mock.ANY}, {"x": 4, "y": 5, "inner": mock.ANY}, 13),
             ),
-            (14, Return({"outer": mock.ANY, "result": 13}, {}, None)),
+            (14, TReturn({"outer": mock.ANY, "result": 13}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, {}, None, Meta.NONE),
-            (4, {Var("<module>", "outer"): mock.ANY}, None, Meta.NONE),
-            (4, {Var("outer", "x"): 4}, None, Meta.CALL),
-            (5, {Var("outer", "y"): 5}, None, Meta.NONE),
-            (7, {Var("outer", "inner"): mock.ANY}, None, Meta.NONE),
-            (
-                7,
-                {Var("inner", "a"): 8, Var("inner", "y"): 5},
-                None,
-                Meta.CALL,
-            ),
-            (8, {Var("inner", "x"): 13}, None, Meta.NONE),
-            (9, {}, None, Meta.RETURN),
-            (11, {}, None, Meta.RETURN),
-            (14, {Var("<module>", "result"): 13}, None, Meta.NONE),
+            (1, Line({}, None)),
+            (4, Line({Var("<module>", "outer"): mock.ANY}, None)),
+            (14, Line({}, None)),
+            (4, Call("outer", {Var("outer", "x"): 4})),
+            (5, Line({Var("outer", "y"): 5}, None)),
+            (7, Line({Var("outer", "inner"): mock.ANY}, None)),
+            (11, Line({}, None)),
+            # Closures in action!
+            (7, Call("inner", {Var("inner", "a"): 8, Var("inner", "y"): 5})),
+            (8, Line({Var("inner", "x"): 13}, None)),
+            (9, Line({}, None)),
+            (9, Return(13)),
+            (11, Return(13)),
+            (14, Line({Var("<module>", "result"): 13}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -260,39 +236,30 @@ class TestFunctions(unittest.TestCase):
         from .snippets import function_in_variable  # noqa
 
         expected_trace = [
-            (0, Call({}, {}, "<module>")),
-            (1, Line({}, {})),
-            (4, Line({}, {})),
-            (8, Line({"f": mock.ANY}, {})),
-            (10, Line({"f": mock.ANY, "greet": mock.ANY}, {})),
-            (
-                4,
-                Call(
-                    {"f": mock.ANY, "greet": mock.ANY},
-                    {"name": "Mike"},
-                    function_name="f",
-                ),
-            ),
-            (5, Line({"f": mock.ANY, "greet": mock.ANY}, {"name": "Mike"})),
-            (5, Output("Hello")),
-            (5, Output(" ")),
-            (5, Output("Mike")),
-            (5, Output("\n")),
+            (0, TCall({}, {}, "<module>")),
+            (1, TLine({}, {})),
+            (4, TLine({}, {})),
+            (8, TLine({"f": mock.ANY}, {})),
+            (10, TLine({"f": mock.ANY, "greet": mock.ANY}, {})),
+            (4, TCall({"f": mock.ANY, "greet": mock.ANY}, {"name": "Mike"}, "f")),
+            (5, TLine({"f": mock.ANY, "greet": mock.ANY}, {"name": "Mike"})),
+            (5, TOutput("Hello Mike\n")),
             (
                 5,
-                Return({"f": mock.ANY, "greet": mock.ANY}, {"name": "Mike"}, None),
+                TReturn({"f": mock.ANY, "greet": mock.ANY}, {"name": "Mike"}, None),
             ),
-            (10, Return({"f": mock.ANY, "greet": mock.ANY}, {}, None)),
+            (10, TReturn({"f": mock.ANY, "greet": mock.ANY}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, {}, None, Meta.NONE),
-            (4, {Var("<module>", "f"): mock.ANY}, None, Meta.NONE),
-            (8, {Var("<module>", "greet"): mock.ANY}, None, Meta.NONE),
-            (4, {Var("f", "name"): "Mike"}, None, Meta.CALL),
-            (5, {}, "Hello Mike\n", Meta.RETURN),
-            (10, {}, None, Meta.NONE),
+            (1, Line({}, None)),
+            (4, Line({Var("<module>", "f"): mock.ANY}, None)),
+            (8, Line({Var("<module>", "greet"): mock.ANY}, None)),
+            (10, Line({}, None)),
+            (4, Call("f", {Var("f", "name"): "Mike"})),
+            (5, Line({}, "Hello Mike\n")),
+            (5, Return(None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -301,30 +268,26 @@ class TestFunctions(unittest.TestCase):
         from .snippets import function_lambda  # noqa
 
         expected_trace = [
-            (0, Call({}, {}, "<module>")),
-            (1, Line({}, {})),
-            (3, Line({}, {})),
-            (4, Line({"add": mock.ANY}, {})),
-            (3, Call({"add": mock.ANY}, {"x": 5, "y": 3}, function_name=mock.ANY)),
-            (3, Line({"add": mock.ANY}, {"x": 5, "y": 3})),
-            (3, Return({"add": mock.ANY}, {"x": 5, "y": 3}, 8)),
-            (4, Output("8")),
-            (4, Output("\n")),
-            (4, Return({"add": mock.ANY}, {}, None)),
+            (0, TCall({}, {}, "<module>")),
+            (1, TLine({}, {})),
+            (3, TLine({}, {})),
+            (4, TLine({"add": mock.ANY}, {})),
+            (3, TCall({"add": mock.ANY}, {"x": 5, "y": 3}, mock.ANY)),
+            (3, TLine({"add": mock.ANY}, {"x": 5, "y": 3})),
+            (3, TReturn({"add": mock.ANY}, {"x": 5, "y": 3}, 8)),
+            (4, TOutput("8\n")),
+            (4, TReturn({"add": mock.ANY}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, {}, None, Meta.NONE),
-            (3, {Var("<module>", "add"): mock.ANY}, None, Meta.NONE),
-            (
-                3,
-                {Var("<lambda>", "y"): 3, Var("<lambda>", "x"): 5},
-                None,
-                Meta.CALL,
-            ),
-            (3, {}, None, Meta.RETURN),
-            (4, {}, "8\n", Meta.NONE),
+            (1, Line({}, None)),
+            (3, Line({Var("<module>", "add"): mock.ANY}, None)),
+            (4, Line({}, None)),
+            (3, Call("<lambda>", {Var("<lambda>", "x"): 5, Var("<lambda>", "y"): 3})),
+            (3, Line({}, None)),
+            (3, Return(8)),
+            (4, Line({}, "8\n")),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -333,52 +296,49 @@ class TestFunctions(unittest.TestCase):
         from .snippets import function_generator  # noqa
 
         expected_trace = [
-            (0, Call({}, {}, "<module>")),
-            (1, Line({}, {})),
-            (4, Line({}, {})),
-            (10, Line({"countdown": mock.ANY}, {})),
-            (4, Call({"countdown": mock.ANY}, {"n": 1}, function_name="countdown")),
-            (5, Line({"countdown": mock.ANY}, {"n": 1})),
-            (6, Line({"countdown": mock.ANY}, {"n": 1})),
-            (6, Return({"countdown": mock.ANY}, {"n": 1}, 1)),
-            (11, Line({"countdown": mock.ANY, "num": 1}, {})),
-            (11, Output(text="1")),
-            (11, Output(text="\n")),
-            (10, Line({"countdown": mock.ANY, "num": 1}, {})),
+            (0, TCall({}, {}, "<module>")),
+            (1, TLine({}, {})),
+            (4, TLine({}, {})),
+            (10, TLine({"countdown": mock.ANY}, {})),
+            (4, TCall({"countdown": mock.ANY}, {"n": 1}, "countdown")),
+            (5, TLine({"countdown": mock.ANY}, {"n": 1})),
+            (6, TLine({"countdown": mock.ANY}, {"n": 1})),
+            (6, TReturn({"countdown": mock.ANY}, {"n": 1}, 1)),
+            (11, TLine({"countdown": mock.ANY, "num": 1}, {})),
+            (11, TOutput(text="1\n")),
+            (10, TLine({"countdown": mock.ANY, "num": 1}, {})),
             (
                 6,
-                Call(
+                TCall(
                     {"countdown": mock.ANY, "num": 1},
                     {"n": 1},
-                    function_name="countdown",
+                    "countdown",
                 ),
             ),
-            (7, Line({"countdown": mock.ANY, "num": 1}, {"n": 1})),
-            (5, Line({"countdown": mock.ANY, "num": 1}, {"n": 0})),
+            (7, TLine({"countdown": mock.ANY, "num": 1}, {"n": 1})),
+            (5, TLine({"countdown": mock.ANY, "num": 1}, {"n": 0})),
             (
                 5,
-                Return({"countdown": mock.ANY, "num": 1}, {"n": 0}, None),
+                TReturn({"countdown": mock.ANY, "num": 1}, {"n": 0}, None),
             ),
-            (10, Return({"countdown": mock.ANY, "num": 1}, {}, None)),
+            (10, TReturn({"countdown": mock.ANY, "num": 1}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, {}, None, Meta.NONE),
-            (
-                4,
-                {Var("<module>", "countdown"): mock.ANY},
-                None,
-                Meta.NONE,
-            ),
-            (4, {Var("countdown", "n"): 1}, None, Meta.CALL),
-            (5, {}, None, Meta.NONE),
-            (6, {}, None, Meta.RETURN),
-            (10, {Var("<module>", "num"): 1}, None, Meta.NONE),
-            (11, {}, "1\n", Meta.NONE),
-            (6, {Var("countdown", "n"): 1}, None, Meta.CALL),
-            (7, {Var("countdown", "n"): 0}, None, Meta.NONE),
-            (5, {}, None, Meta.RETURN),
-            (10, {}, None, Meta.NONE),
+            (1, Line({}, None)),
+            (4, Line({Var("<module>", "countdown"): mock.ANY}, None)),
+            (10, Line({}, None)),
+            (4, Call("countdown", {Var("countdown", "n"): 1})),
+            (5, Line({}, None)),
+            (6, Line({}, None)),
+            (6, Return(1)),
+            (10, Line({Var("<module>", "num"): 1}, None)),
+            (11, Line({}, "1\n")),
+            (10, Line({}, None)),
+            (6, Call("countdown", {Var("countdown", "n"): 1})),
+            (7, Line({Var("countdown", "n"): 0}, None)),
+            (5, Line({}, None)),
+            (5, Return(None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))

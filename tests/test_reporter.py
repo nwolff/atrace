@@ -4,7 +4,7 @@ from unittest import mock
 
 from rich.console import Console
 
-from atrace import UNASSIGN, History, Meta, Var
+from atrace import UNASSIGN, Call, History, Line, Return, Var
 from atrace.reporter import history_to_table, history_to_table_data
 
 
@@ -19,10 +19,10 @@ def capture_report(history: History) -> str:
 class TestReporter(unittest.TestCase):
     def test_all_assignments(self):
         history: History = [
-            (3, {Var("<module>", "x"): 1}, None, Meta.NONE),
-            (4, {Var("<module>", "x"): None}, None, Meta.NONE),
-            (5, {Var("<module>", "x"): UNASSIGN}, None, Meta.NONE),
-            (6, {Var("<module>", "x"): "bob"}, None, Meta.NONE),
+            (3, Line({Var("<module>", "x"): 1}, None)),
+            (4, Line({Var("<module>", "x"): None}, None)),
+            (5, Line({Var("<module>", "x"): UNASSIGN}, None)),
+            (6, Line({Var("<module>", "x"): "bob"}, None)),
         ]
         expected_table_data = (
             ["line", "x"],
@@ -36,9 +36,10 @@ class TestReporter(unittest.TestCase):
         self.assertEqual(expected_table_data, history_to_table_data(history))
 
     def test_with_output(self):
-        history = [
-            (3, {Var("<module>", "x"): 1}, None, Meta.NONE),
-            (4, {}, "1\n", Meta.NONE),
+        history: History = [
+            (1, Line({}, None)),
+            (3, Line({Var("<module>", "x"): 1}, None)),
+            (4, Line({}, "1\n")),
         ]
         expected_table_data = (
             ["line", "x", "output"],
@@ -48,15 +49,13 @@ class TestReporter(unittest.TestCase):
 
     def test_with_functions(self):
         history: History = [
-            (
-                4,
-                {Var("<module>", "double"): mock.ANY},
-                None,
-                Meta.NONE,
-            ),
-            (4, {Var("double", "a"): 3}, None, Meta.NONE),
-            (5, {Var("double", "result"): 6}, None, Meta.NONE),
-            (9, {Var("<module>", "x"): 6}, None, Meta.NONE),
+            (1, Line({}, None)),
+            (4, Line({Var("<module>", "double"): mock.ANY}, None)),
+            (9, Line({}, None)),
+            (4, Call("double", {Var("double", "a"): 3})),
+            (5, Line({Var("double", "result"): 6}, None)),
+            (6, Return(6)),
+            (9, Line({Var("<module>", "x"): 6}, None)),
         ]
         expected_table_data = (
             ["line", "double", "(double) a", "(double) result", "x"],
@@ -71,24 +70,22 @@ class TestReporter(unittest.TestCase):
 
     def test_display(self):
         history: History = [
-            (
-                3,
-                {Var("<module>", "x"): 1, Var("<module>", "y"): 3},
-                None,
-                Meta.NONE,
-            ),
-            (6, {Var("<module>", "x"): 2}, None, Meta.NONE),
-            (6, {Var("<module>", "x"): 3}, None, Meta.NONE),
-            (8, {}, "x: 3\n", Meta.NONE),
-            (10, {Var("<module>", "t"): (1, "a")}, None, Meta.NONE),
-            (13, {Var("greet", "name"): "Bob"}, None, Meta.NONE),
-            (
-                14,
-                {Var("greet", "message"): "Hello Bob!"},
-                None,
-                Meta.NONE,
-            ),
-            (18, {}, "Hello Bob!\n", Meta.NONE),
+            (3, Line({Var("<module>", "x"): 1, Var("<module>", "y"): 3}, None)),
+            (5, Line({}, None)),
+            (6, Line({Var("<module>", "x"): 2}, None)),
+            (5, Line({}, None)),
+            (6, Line({Var("<module>", "x"): 3}, None)),
+            (5, Line({}, None)),
+            (8, Line({}, "x: 3\n")),
+            (10, Line({Var("<module>", "t"): (1, "a")}, None)),
+            # We need to pass a callable, otherwise it gets displayed
+            (13, Line({Var("<module>", "greet"): lambda: None}, None)),
+            (18, Line({}, None)),
+            (13, Call("greet", {Var("greet", "name"): "Bob"})),
+            (14, Line({Var("greet", "message"): "Hello Bob!"}, None)),
+            (15, Line({}, None)),
+            (15, Return("Hello Bob!")),
+            (18, Line({}, "Hello Bob!\n")),
         ]
         expected_result = """\
         ╭───────┬────┬────┬───────────┬───────────────┬──────────────────┬─────────────╮

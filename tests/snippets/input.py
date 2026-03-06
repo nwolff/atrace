@@ -1,4 +1,4 @@
 import atrace  # noqa
 
-x = input("your name")
-print("hello", x)
+x = input("Your name: ")
+print("Hello", x)

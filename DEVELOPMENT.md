@@ -1,18 +1,16 @@
-# TODO
+# Ideas
 
-- Add a view with an animated trace, with the current state visible. Maybe the old
-  state flies away ?
-
-## Maybe
-
-- Add exceptions raised in history
-- Localized README. [English](README.md) | [Français](README.fr.md)
+- Show exceptions
+- Show returns
+- Show activations
+- Add a view with an animated trace, with the current state visible.
+  Maybe with the old state scrolling and fadaing away ?
 - Tests depend on current locale
 - Speed control / Manual nav / Automaticaly determine the best animation length
-- Fix jitter in animated_histogram when scrolling (video game camera technique)
-- Show activations ? Just the depth ?
+- Fix jitter in animated_histogram when scrolling (I've read about this in video game
+  camera techniques)
 - Capture the animation with Ascii-cinema / moviepy / console.save_svg. Maybe just
-  document
+  document that.
 
 # Development
 

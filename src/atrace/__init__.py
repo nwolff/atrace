@@ -3,9 +3,6 @@ import inspect
 import sys
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from enum import IntEnum, auto
-from itertools import groupby
-from operator import itemgetter
 from types import FrameType, ModuleType, TracebackType
 from typing import Any, TextIO, TypeAlias
 
@@ -25,7 +22,6 @@ except ImportError:
     # Fallback for local development if _version.py hasn't been generated yet
     __version__ = "0.0.0.dev0"
 
-
 """
 ###############################################################################
 # TRACING
@@ -34,18 +30,17 @@ except ImportError:
 The models and classes that collect the trace.
 """
 
-
 Symbols: TypeAlias = dict[str, Any]
 
 
 @dataclass(frozen=True)
-class ExecutionEvent:
+class Capturing:
     globals: Symbols
     locals: Symbols
 
 
 @dataclass(frozen=True)
-class Line(ExecutionEvent):
+class TLine(Capturing):
     """
     The interpreter is about to execute a new line of code
     or re-execute the condition of a loop
@@ -53,7 +48,7 @@ class Line(ExecutionEvent):
 
 
 @dataclass(frozen=True)
-class Call(ExecutionEvent):
+class TCall(Capturing):
     """
     A function is called or some other code block entered.
     This is emitted at the point of entering the function.
@@ -67,7 +62,7 @@ class Call(ExecutionEvent):
 
 
 @dataclass(frozen=True)
-class Return(ExecutionEvent):
+class TReturn(Capturing):
     """
     A function or other code block is about to return.
     """
@@ -76,7 +71,7 @@ class Return(ExecutionEvent):
 
 
 @dataclass(frozen=True)
-class ExceptionOccurred(ExecutionEvent):
+class TException(Capturing):
     """
     An exception has occurred
     """
@@ -87,7 +82,7 @@ class ExceptionOccurred(ExecutionEvent):
 
 
 @dataclass(frozen=True)
-class Output:
+class TOutput:
     """
     Some text was written to stdout
     """
@@ -95,9 +90,9 @@ class Output:
     text: str
 
 
-Event: TypeAlias = Line | Call | Return | ExceptionOccurred | Output
+TEvent: TypeAlias = TLine | TCall | TReturn | TException | TOutput
 
-Trace: TypeAlias = list[tuple[int, Event]]
+Trace: TypeAlias = list[tuple[int, TEvent]]
 
 DoneCallback = Callable[[Trace], None]
 
@@ -139,6 +134,9 @@ class OutputLogger:
     """
     OutputLogger wraps stdout. It passes down writes and flushes to it,
     while simultaneously capturing the text to the trace.
+
+    Coalesces consecutive outputs. Because for instance print("hello", "world")
+    becomes 4 writes ("hello", " ", "world", "\n")
     """
 
     def __init__(self, trace: Trace, stdout: TextIO):
@@ -152,7 +150,15 @@ class OutputLogger:
         self.stdout.write(text)
 
         frame = sys._getframe(1)
-        self.trace.append((frame.f_lineno, Output(text)))
+        lineno = frame.f_lineno
+
+        previous = self.trace[-1]
+        if previous:
+            previous_lineno, previous_event = previous
+            if previous_lineno == lineno and isinstance(previous_event, TOutput):
+                self.trace[-1] = lineno, TOutput(previous_event.text + text)
+                return
+        self.trace.append((lineno, TOutput(text)))
 
     def flush(self):
         self.stdout.flush()
@@ -201,18 +207,18 @@ class Tracer:
             else copy_carefully(filtered_variables(frame.f_locals))
         )
 
-        trace_event: Event | None = None
+        trace_event: TEvent | None = None
         match event:
             case "line":
-                trace_event = Line(globals=globs, locals=locs)
+                trace_event = TLine(globals=globs, locals=locs)
             case "call":
-                trace_event = Call(
+                trace_event = TCall(
                     globals=globs, locals=locs, function_name=frame.f_code.co_name
                 )
             case "return":
-                trace_event = Return(globals=globs, locals=locs, return_value=arg)
+                trace_event = TReturn(globals=globs, locals=locs, return_value=arg)
             case "exception":
-                trace_event = ExceptionOccurred(
+                trace_event = TException(
                     globals=globs,
                     locals=locs,
                     exception=arg[0],
@@ -264,27 +270,42 @@ class Var:
     name: str
 
 
-class Meta(IntEnum):
-    NONE = 0
-    CALL = auto()
-    RETURN = auto()
+class Unassign:
+    def __repr__(self):
+        return "<UNASSIGN>"
 
 
-UNASSIGN = object()
+UNASSIGN = Unassign()
 
 Assignments: TypeAlias = dict[Var, Any]
 
-UnpackedHistory: TypeAlias = Iterable[tuple[int, Assignments | str, Meta]]
 
-HistoryItem: TypeAlias = tuple[int, Assignments, str | None, Meta]
-History: TypeAlias = list[HistoryItem]
-
-
-@dataclass
-class Activation:
+@dataclass(frozen=True)
+class Call:
     function_name: str
-    locals: Symbols
-    lineno_awaiting_assignments: int | None
+    bindings: Assignments
+
+
+@dataclass(frozen=True)
+class Return:
+    return_value: Any
+
+
+@dataclass(frozen=True)
+class Raise:
+    exception: Exception
+    value: Any
+    traceback: TracebackType
+
+
+@dataclass(frozen=True)
+class Line:
+    assignments: Assignments
+    output: str | None
+
+
+HistoryItem: TypeAlias = tuple[int, Line | Call | Return | Raise]
+History: TypeAlias = list[HistoryItem]
 
 
 def diff(scope: str, before: Symbols, after: Symbols) -> Assignments:
@@ -302,84 +323,168 @@ def diff(scope: str, before: Symbols, after: Symbols) -> Assignments:
     return assignments
 
 
+@dataclass
+class MutableLine:
+    assignments: Assignments
+    output: str | None
+
+
+@dataclass(frozen=True)
+class AssignmentsForLine:
+    lineno: int
+    assignments: Assignments
+
+
+@dataclass(frozen=True)
+class OutputForLine:
+    lineno: int
+    text: str
+
+
+# An intermediate data structure in which the Assignments and Output are still separate
+UnpackedHistory: TypeAlias = Iterable[
+    tuple[int, MutableLine | Call | Return | Raise] | AssignmentsForLine | OutputForLine
+]
+
+
+@dataclass
+class Activation:
+    function_name: str
+    locals: Symbols
+    last_line_no: int
+
+
 def _trace_to_unpacked_history(trace: Trace) -> UnpackedHistory:
-    """
-    Simulate the state of global and local symbols,
-    in order to reconstruct a history of assignments.
+    """Simulate the state of global and local symbols in order to reconstruct
+    a history of assignments.
 
     Because line events are emitted _before_ a line is executed,
     we only see the new values of globals and locals when the next event arrives.
     """
 
     current_globals: Symbols = {}
-    activations = [Activation("guard", {}, None)]
+    activations = [Activation("guard", {}, -1)]
 
     for lineno, event in trace:
+
+        def _compute_assignments(activation: Activation, globs: Symbols, locs: Symbols):
+            local_assignments = diff(activation.function_name, activation.locals, locs)
+            global_assignments = diff("<module>", current_globals, globs)
+            return local_assignments | global_assignments
+
         match event:
-            case Call(_, locs, function_name):
-                activations.append(Activation(function_name, locs, None))
-                # Capture the function bindings,
-                local_assignments = diff(function_name, {}, locs)
-                yield lineno, local_assignments, Meta.CALL
+            case TCall(_, locs, function_name):
+                activations.append(Activation(function_name, locs, -1))
+                function_bindings = diff(function_name, {}, locs)
+                yield lineno, Call(function_name, function_bindings)
 
-            case Line(globs, locs) | Return(globs, locs):
+            case TLine(globs, locs):
                 activation = activations[-1]
-                local_assignments = diff(
-                    activation.function_name, activation.locals, locs
-                )
-                global_assignments = diff("<module>", current_globals, globs)
-                assignments = local_assignments | global_assignments
+                a = _compute_assignments(activation, globs, locs)
+                if a:
+                    yield AssignmentsForLine(activation.last_line_no, a)
 
-                meta = Meta.RETURN if isinstance(event, Return) else Meta.NONE
-                if activation.lineno_awaiting_assignments:
-                    yield activation.lineno_awaiting_assignments, assignments, meta
-
-                activation.locals = locs
+                yield lineno, MutableLine({}, None)
                 current_globals = globs
-                if isinstance(event, Line):
-                    activation.lineno_awaiting_assignments = lineno
-                elif isinstance(event, Return):
-                    activations.pop()
+                activation.locals = locs
+                activation.last_line_no = lineno
 
-            case Output(text):
-                yield lineno, text, Meta.NONE
+            case TReturn(globs, locs, return_value):
+                activation = activations[-1]
+                a = _compute_assignments(activation, globs, locs)
+                if a:
+                    yield AssignmentsForLine(activation.last_line_no, a)
+
+                current_globals = globs
+                yield lineno, Return(return_value)
+                activations.pop()
+
+            case TException(globs, locs, _exception, value, traceback):
+                activation = activations[-1]
+                a = _compute_assignments(activation, globs, locs)
+                if a:
+                    yield AssignmentsForLine(activation.last_line_no, a)
+
+                current_globals = globs
+                yield lineno, Raise(_exception, value, traceback)
+
+            case TOutput(text):
+                activation = activations[-1]
+                yield OutputForLine(activation.last_line_no, text)
 
 
-def _join_outputs(unpacked: UnpackedHistory) -> Iterable[HistoryItem]:
-    """
-    Coalesce consecutive events that occur on the same line: outputs, assignments
-    """
+MutableHistory: TypeAlias = list[tuple[int, MutableLine | Call | Return | Raise]]
 
-    for lineno, group in groupby(unpacked, key=itemgetter(0)):
-        pending_output = None
-        for _, item, meta in group:
-            if isinstance(item, str):
-                pending_output = (pending_output or "") + item
-            else:
-                yield lineno, item, pending_output, meta
-                pending_output = None
 
-        if pending_output:
-            yield lineno, {}, pending_output, Meta.NONE
+def _merge_assignments_and_outputs(unpacked: UnpackedHistory) -> MutableHistory:
+    """Merge outputs and assignments into the *preceding* Line object.
+    This is not a generator because we mutate things after we yield them,
+    we don't want anyone to be sensitive to that."""
+    history: MutableHistory = []
+    target: MutableLine | None = None
+
+    for x in unpacked:
+        match x:
+            case lineno, MutableLine(_, _) as ml:
+                target = ml
+                history.append((lineno, ml))  # type: ignore
+
+            case AssignmentsForLine(target_lineno, assignments):
+                if target:
+                    target.assignments = assignments
+                else:
+                    target = MutableLine(assignments, None)
+                    history.append((target_lineno, target))
+
+            case OutputForLine(target_lineno, text):
+                if target:
+                    target.output = text
+                else:
+                    target = MutableLine({}, text)
+                    history.append((target_lineno, target))
+
+            case lineno, item:
+                target = None
+                history.append((lineno, item))
+
+    return history
+
+
+def _freeze(merged: MutableHistory) -> History:
+    result: History = []
+    for lineno, item in merged:
+        match item:
+            case MutableLine(assignments, output):
+                result.append((lineno, Line(assignments, output)))
+
+            case _:
+                result.append((lineno, item))
+
+    return result
 
 
 def _filter_artifacts(history: History) -> History:
-    """
-    Two artifacts:
-    - The call at line 0
-    - The last line that is a return of code that the user doesn't know about
-    """
+    """History contains extra implementation artifacts:
+    - It always contains an extra return at the end that's not part of our program.
+      We get rid of that
+    - Depending on how the trace was captured it sometimes starts with a call into the
+      module with lineno 0. We get rid of that as well."""
+
     if len(history) < 2:
         return history
-    lineno, assignments, output, _ = history[-1]
-    cleaned_last = (lineno, assignments, output, Meta.NONE)
-    return history[1:-1] + [cleaned_last]
+
+    lineno, _ = history[0]
+    if lineno == 0:
+        return history[1:-1]
+    else:
+        return history[:-1]
 
 
 def trace_to_history(trace: Trace) -> History:
     unpacked = _trace_to_unpacked_history(trace)
-    joined = list(_join_outputs(unpacked))
-    return _filter_artifacts(joined)
+    merged = _merge_assignments_and_outputs(unpacked)
+    frozen = _freeze(merged)
+    return _filter_artifacts(frozen)
 
 
 ###############################################################################
