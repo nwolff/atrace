@@ -78,6 +78,36 @@ class TestFunctions(unittest.TestCase):
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
+    def test_function_print_before_call(self):
+        trace_next_loaded_module(self.callback_done)
+        from .snippets import function_print_before_call  # noqa
+
+        expected_trace = [
+            (0, TCall({}, {}, "<module>")),
+            (1, TLine({}, {})),
+            (4, TLine({}, {})),
+            (8, TLine({"double": mock.ANY}, {})),
+            (8, TOutput("hahaha\n")),
+            (9, TLine({"double": mock.ANY}, {})),
+            (4, TCall({"double": mock.ANY}, {"a": 5}, "double")),
+            (5, TLine({"double": mock.ANY}, {"a": 5})),
+            (5, TReturn({"double": mock.ANY}, {"a": 5}, 10)),
+            (9, TReturn({"double": mock.ANY, "x": 10}, {}, None)),
+        ]
+        self.assertEqual(expected_trace, self.trace)
+
+        expected_history = [
+            (1, Line({}, None)),
+            (4, Line({Var("<module>", "double"): mock.ANY}, None)),
+            (8, Line({}, "hahaha\n")),
+            (9, Line({}, None)),
+            (4, Call("double", {Var("double", "a"): 5})),
+            (5, Line({}, None)),
+            (5, Return(10)),
+            (9, Line({Var("<module>", "x"): 10}, None)),
+        ]
+        self.assertEqual(expected_history, trace_to_history(self.trace))
+
     def test_function_modifying_global(self):
         trace_next_loaded_module(self.callback_done)
         from .snippets import function_modifying_global  # noqa

@@ -132,10 +132,13 @@ def history_to_table_data(history: History) -> TableData:
         match item:
             case Call(_, bindings):
                 item_assignments = bindings
+                item_output = None
             case Line(assignments, output):
                 item_assignments = assignments
+                item_output = output
             case _:
                 item_assignments = {}
+                item_output = None
 
         row: RowData = [str(lineno)]
         for variable in all_variables:
@@ -146,7 +149,7 @@ def history_to_table_data(history: History) -> TableData:
             row.append(content)
 
         if history_has_output:
-            row.append(format_output(output))
+            row.append(format_output(item_output))
 
         if item_assignments or output:  # This is a weird way to do things
             rows.append(row)

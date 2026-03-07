@@ -68,6 +68,29 @@ class TestReporter(unittest.TestCase):
         )
         self.assertEqual(expected_table_data, history_to_table_data(history))
 
+    def test_weird(self):
+        history: History = [
+            (1, Line({}, None)),
+            (4, Line({Var("<module>", "double"): mock.ANY}, None)),
+            (8, Line({}, "hahaha\n")),
+            (9, Line({}, None)),
+            (4, Call("double", {Var("double", "a"): 5})),
+            (5, Line({}, None)),
+            (5, Return(10)),
+            (9, Line({Var("<module>", "x"): 10}, None)),
+        ]
+        expected_table_data = (
+            ["line", "double", "(double) a", "x", "output"],
+            [
+                ["4", "<ANY>", None, None, None],
+                ["8", None, None, None, "hahaha"],
+                ["4", None, "5", None, None],
+                ["5", None, None, None, None],
+                ["9", None, None, "10", None],
+            ],
+        )
+        self.assertEqual(expected_table_data, history_to_table_data(history))
+
     def test_display(self):
         history: History = [
             (3, Line({Var("<module>", "x"): 1, Var("<module>", "y"): 3}, None)),
