@@ -1,6 +1,3 @@
-import atrace  # noqa
-
-
 def countdown(n):
     while n > 0:
         yield n

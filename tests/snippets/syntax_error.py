@@ -1,6 +1,3 @@
-# type: ignore
-import atrace  # noqa
-
 x = 1
 
-f(x)  # noqa
+f(x)  # type: ignore # noqa

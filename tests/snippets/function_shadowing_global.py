@@ -1,5 +1,3 @@
-import atrace  # noqa
-
 c = "start"
 
 

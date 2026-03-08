@@ -1,10 +1,8 @@
 # Ideas
 
-- Show exceptions
-- Show returns
-- Show activations
-- Add a view with an animated trace, with the current state visible.
-  Maybe with the old state scrolling and fadaing away ?
+- Show activations and returns (with or without values) in the trace. Maybe use an
+  arrow symbol
+- Add an animated view showing just the current state (like a debugger)
 - Tests depend on current locale
 - Speed control / Manual nav / Automaticaly determine the best animation length
 - Fix jitter in animated_histogram when scrolling (I've read about this in video game
@@ -24,7 +22,7 @@ With cpython:
 
 With pypy:
 
-    uv run --python pypy examples/small.py
+    uv run pypy examples/small.py
 
 ## Type Checking
 

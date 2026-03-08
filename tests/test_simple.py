@@ -30,12 +30,12 @@ class TestSimple(unittest.TestCase):
 
         expected_trace = [
             (0, TCall({}, {}, "<module>")),
-            (1, TLine({}, {})),
-            (1, TReturn({}, {}, None)),
+            (0, TLine({}, {})),
+            (0, TReturn({}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
-        expected_history: History = [(1, Line({}, None))]
+        expected_history: History = [(0, Line({}, None))]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_single_assignment(self):
@@ -45,15 +45,13 @@ class TestSimple(unittest.TestCase):
         expected_trace = [
             (0, TCall({}, {}, "<module>")),
             (1, TLine({}, {})),
-            (3, TLine({}, {})),
-            (3, TReturn({"x": 1}, {}, None)),
+            (1, TReturn({"x": 1}, {}, None)),
         ]
 
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({}, None)),
-            (3, Line({Var("<module>", "x"): 1}, None)),
+            (1, Line({Var("<module>", "x"): 1}, None)),
         ]
         self.assertEqual(
             expected_history,
@@ -67,20 +65,18 @@ class TestSimple(unittest.TestCase):
         expected_trace = [
             (0, TCall({}, {}, "<module>")),
             (1, TLine({}, {})),
-            (3, TLine({}, {})),
-            (4, TLine({"x": 1}, {})),
-            (5, TLine({"x": None}, {})),
-            (6, TLine({}, {})),
-            (6, TReturn({"x": "bob"}, {}, None)),
+            (2, TLine({"x": 1}, {})),
+            (3, TLine({"x": None}, {})),
+            (4, TLine({}, {})),
+            (4, TReturn({"x": "bob"}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({}, None)),
-            (3, Line({Var("<module>", "x"): 1}, None)),
-            (4, Line({Var("<module>", "x"): None}, None)),
-            (5, Line({Var("<module>", "x"): UNASSIGN}, None)),
-            (6, Line({Var("<module>", "x"): "bob"}, None)),
+            (1, Line({Var("<module>", "x"): 1}, None)),
+            (2, Line({Var("<module>", "x"): None}, None)),
+            (3, Line({Var("<module>", "x"): UNASSIGN}, None)),
+            (4, Line({Var("<module>", "x"): "bob"}, None)),
         ]
         self.assertEqual(
             expected_history,
@@ -95,14 +91,12 @@ class TestSimple(unittest.TestCase):
         expected_trace = [
             (0, TCall({}, {}, "<module>")),
             (1, TLine({}, {})),
-            (3, TLine({}, {})),
-            (3, TReturn({"x": 1, "y": 2}, {}, None)),
+            (1, TReturn({"x": 1, "y": 2}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({}, None)),
-            (3, Line({Var("<module>", "x"): 1, Var("<module>", "y"): 2}, None)),
+            (1, Line({Var("<module>", "x"): 1, Var("<module>", "y"): 2}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -113,18 +107,16 @@ class TestSimple(unittest.TestCase):
         expected_trace = [
             (0, TCall({}, {}, "<module>")),
             (1, TLine({}, {})),
-            (3, TLine({}, {})),
-            (3, TOutput("hello world!\n")),
-            (4, TLine({}, {})),
-            (4, TOutput("goodbye\n")),
-            (4, TReturn({}, {}, None)),
+            (1, TOutput("hello world!\n")),
+            (2, TLine({}, {})),
+            (2, TOutput("goodbye\n")),
+            (2, TReturn({}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history: History = [
-            (1, Line({}, None)),
-            (3, Line({}, "hello world!\n")),
-            (4, Line({}, "goodbye\n")),
+            (1, Line({}, "hello world!\n")),
+            (2, Line({}, "goodbye\n")),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -135,25 +127,23 @@ class TestSimple(unittest.TestCase):
         expected_trace = [
             (0, TCall({}, {}, "<module>")),
             (1, TLine({}, {})),
-            (3, TLine({}, {})),
-            (4, TLine({"x": 1}, {})),
-            (4, TOutput("1\n")),
-            (4, TReturn({"x": 1}, {}, None)),
+            (2, TLine({"x": 1}, {})),
+            (2, TOutput("1\n")),
+            (2, TReturn({"x": 1}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({}, None)),
-            (3, Line({Var("<module>", "x"): 1}, None)),
-            (4, Line({}, "1\n")),
+            (1, Line({Var("<module>", "x"): 1}, None)),
+            (2, Line({}, "1\n")),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_input(self):
-        """In this test it looks like the prompt does not appear in the trace.
-        In real code it does.
-        I tried to use side_effect with patch, but then the side effect function
-        invocation appears in the trace."""
+        # In this test it looks like the prompt does not appear in the trace.
+        # In real code it does.
+        # I tried to use side_effect with patch, but then the side effect function
+        # invocation appears in the trace.
         trace_next_loaded_module(self.callback_done)
 
         with patch("builtins.input", return_value="Bob"):
@@ -162,17 +152,15 @@ class TestSimple(unittest.TestCase):
         expected_trace = [
             (0, TCall({}, {}, "<module>")),
             (1, TLine({}, {})),
-            (3, TLine({}, {})),
-            (4, TLine({"x": "Bob"}, {})),
-            (4, TOutput("Hello Bob\n")),
-            (4, TReturn({"x": "Bob"}, {}, None)),
+            (2, TLine({"x": "Bob"}, {})),
+            (2, TOutput("Hello Bob\n")),
+            (2, TReturn({"x": "Bob"}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({}, None)),
-            (3, Line({Var("<module>", "x"): "Bob"}, None)),
-            (4, Line({}, "Hello Bob\n")),
+            (1, Line({Var("<module>", "x"): "Bob"}, None)),
+            (2, Line({}, "Hello Bob\n")),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -184,24 +172,22 @@ class TestSimple(unittest.TestCase):
         expected_trace = [
             (0, TCall({}, {}, "<module>")),
             (1, TLine({}, {})),
-            (3, TLine({}, {})),
-            (4, TLine({"x": 0}, {})),
-            (5, TLine({"x": 0}, {})),
-            (4, TLine({"x": 1}, {})),
-            (5, TLine({"x": 1}, {})),
-            (4, TLine({"x": 2}, {})),
-            (4, TReturn({"x": 2}, {}, None)),
+            (2, TLine({"x": 0}, {})),
+            (3, TLine({"x": 0}, {})),
+            (2, TLine({"x": 1}, {})),
+            (3, TLine({"x": 1}, {})),
+            (2, TLine({"x": 2}, {})),
+            (2, TReturn({"x": 2}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({}, None)),
-            (3, Line({Var("<module>", "x"): 0}, None)),
-            (4, Line({}, None)),
-            (5, Line({Var("<module>", "x"): 1}, None)),
-            (4, Line({}, None)),
-            (5, Line({Var("<module>", "x"): 2}, None)),
-            (4, Line({}, None)),
+            (1, Line({Var("<module>", "x"): 0}, None)),
+            (2, Line({}, None)),
+            (3, Line({Var("<module>", "x"): 1}, None)),
+            (2, Line({}, None)),
+            (3, Line({Var("<module>", "x"): 2}, None)),
+            (2, Line({}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -213,29 +199,27 @@ class TestSimple(unittest.TestCase):
         expected_trace = [
             (0, TCall({}, {}, "<module>")),
             (1, TLine({}, {})),
-            (3, TLine({}, {})),
-            (4, TLine({"i": 0}, {})),
-            (4, TOutput("0\n")),
-            (3, TLine({"i": 0}, {})),
-            (4, TLine({"i": 1}, {})),
-            (4, TOutput("1\n")),
-            (3, TLine({"i": 1}, {})),
-            (4, TLine({"i": 2}, {})),
-            (4, TOutput("2\n")),
-            (3, TLine({"i": 2}, {})),
-            (3, TReturn({"i": 2}, {}, None)),
+            (2, TLine({"i": 0}, {})),
+            (2, TOutput("0\n")),
+            (1, TLine({"i": 0}, {})),
+            (2, TLine({"i": 1}, {})),
+            (2, TOutput("1\n")),
+            (1, TLine({"i": 1}, {})),
+            (2, TLine({"i": 2}, {})),
+            (2, TOutput("2\n")),
+            (1, TLine({"i": 2}, {})),
+            (1, TReturn({"i": 2}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
+            (1, Line({Var("<module>", "i"): 0}, None)),
+            (2, Line({}, "0\n")),
+            (1, Line({Var("<module>", "i"): 1}, None)),
+            (2, Line({}, "1\n")),
+            (1, Line({Var("<module>", "i"): 2}, None)),
+            (2, Line({}, "2\n")),
             (1, Line({}, None)),
-            (3, Line({Var("<module>", "i"): 0}, None)),
-            (4, Line({}, "0\n")),
-            (3, Line({Var("<module>", "i"): 1}, None)),
-            (4, Line({}, "1\n")),
-            (3, Line({Var("<module>", "i"): 2}, None)),
-            (4, Line({}, "2\n")),
-            (3, Line({}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -247,26 +231,24 @@ class TestSimple(unittest.TestCase):
         expected_trace = [
             (0, TCall({}, {}, "<module>")),
             (1, TLine({}, {})),
-            (3, TLine({}, {})),
-            (4, TLine({"lst": ["a", "b"]}, {})),
-            (5, TLine({"lst": ["a", "b"]}, {})),
-            (5, TOutput("a\n")),
-            (4, TLine({"lst": ["b"]}, {})),
-            (5, TLine({"lst": ["b"]}, {})),
-            (5, TOutput("b\n")),
-            (4, TLine({"lst": []}, {})),
-            (4, TReturn({"lst": []}, {}, None)),
+            (2, TLine({"lst": ["a", "b"]}, {})),
+            (3, TLine({"lst": ["a", "b"]}, {})),
+            (3, TOutput("a\n")),
+            (2, TLine({"lst": ["b"]}, {})),
+            (3, TLine({"lst": ["b"]}, {})),
+            (3, TOutput("b\n")),
+            (2, TLine({"lst": []}, {})),
+            (2, TReturn({"lst": []}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({}, None)),
-            (3, Line({Var("<module>", "lst"): ["a", "b"]}, None)),
-            (4, Line({}, None)),
-            (5, Line({Var("<module>", "lst"): ["b"]}, "a\n")),
-            (4, Line({}, None)),
-            (5, Line({Var("<module>", "lst"): []}, "b\n")),
-            (4, Line({}, None)),
+            (1, Line({Var("<module>", "lst"): ["a", "b"]}, None)),
+            (2, Line({}, None)),
+            (3, Line({Var("<module>", "lst"): ["b"]}, "a\n")),
+            (2, Line({}, None)),
+            (3, Line({Var("<module>", "lst"): []}, "b\n")),
+            (2, Line({}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -278,23 +260,21 @@ class TestSimple(unittest.TestCase):
         expected_trace = [
             (0, TCall({}, {}, "<module>")),
             (1, TLine({}, {})),
-            (3, TLine({}, {})),
-            (3, TLine({}, {"x": 0})),
-            (3, TLine({}, {"x": 1})),
-            (3, TLine({}, {"x": 2})),
-            (3, TLine({}, {"x": 3})),
-            (3, TReturn({"lst": [0, 1, 4, 9]}, {}, None)),
+            (1, TLine({}, {"x": 0})),
+            (1, TLine({}, {"x": 1})),
+            (1, TLine({}, {"x": 2})),
+            (1, TLine({}, {"x": 3})),
+            (1, TReturn({"lst": [0, 1, 4, 9]}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({}, None)),
-            (3, Line({Var("<module>", "x"): 0}, None)),
-            (3, Line({Var("<module>", "x"): 1}, None)),
-            (3, Line({Var("<module>", "x"): 2}, None)),
-            (3, Line({Var("<module>", "x"): 3}, None)),
+            (1, Line({Var("<module>", "x"): 0}, None)),
+            (1, Line({Var("<module>", "x"): 1}, None)),
+            (1, Line({Var("<module>", "x"): 2}, None)),
+            (1, Line({Var("<module>", "x"): 3}, None)),
             (
-                3,
+                1,
                 Line(
                     {
                         Var("<module>", "lst"): [0, 1, 4, 9],
@@ -361,17 +341,13 @@ class TestSimple(unittest.TestCase):
             (0, TCall({}, {}, "<module>")),
             (1, TLine({}, {})),
             (3, TLine({}, {})),
-            (4, TLine({}, {})),
-            (6, TLine({}, {})),
-            (6, TOutput("3.141592653589793\n")),
-            (6, TReturn({}, {}, None)),
+            (3, TOutput("3.141592653589793\n")),
+            (3, TReturn({}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history: History = [
             (1, Line({}, None)),
-            (3, Line({}, None)),
-            (4, Line({}, None)),
-            (6, Line({}, "3.141592653589793\n")),
+            (3, Line({}, "3.141592653589793\n")),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))

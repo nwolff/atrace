@@ -76,8 +76,8 @@ class TException(Capturing):
     An exception has occurred
     """
 
-    exception: Exception
-    value: Any
+    type: type
+    value: BaseException
     traceback: TracebackType
 
 
@@ -221,7 +221,7 @@ class Tracer:
                 trace_event = TException(
                     globals=globs,
                     locals=locs,
-                    exception=arg[0],
+                    type=arg[0],
                     value=arg[1],
                     traceback=arg[2],
                 )
@@ -293,8 +293,8 @@ class Return:
 
 @dataclass(frozen=True)
 class Raise:
-    exception: Exception
-    value: Any
+    type: type
+    value: BaseException
     traceback: TracebackType
 
 

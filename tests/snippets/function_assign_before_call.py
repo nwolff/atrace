@@ -1,6 +1,3 @@
-import atrace  # noqa
-
-
 def double(a):
     return a * 2
 

@@ -1,6 +1,3 @@
-import atrace  # noqa
-
-
 def outer(x):
     y = x + 1
 
