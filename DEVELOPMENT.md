@@ -1,14 +1,17 @@
-# Ideas
+# TODO
 
-- Show activations and returns (with or without values) in the trace. Maybe use an
-  arrow symbol
+## Ideas
+
 - Add an animated view showing just the current state (like a debugger)
-- Tests depend on current locale
 - Speed control / Manual nav / Automaticaly determine the best animation length
 - Fix jitter in animated_histogram when scrolling (I've read about this in video game
   camera techniques)
 - Capture the animation with Ascii-cinema / moviepy / console.save_svg. Maybe just
   document that.
+
+## Technical
+
+- Tests depend on current locale
 
 # Development
 

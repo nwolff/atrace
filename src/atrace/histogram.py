@@ -14,7 +14,7 @@ from rich.console import Console
 from rich.padding import Padding
 from rich.table import Table
 
-from . import History, Trace, trace_code, trace_to_history
+from . import Call, History, Line, Trace, trace_code, trace_to_history
 from .code import (
     CODE_VIEW_WIDTH,
     NumberedLines,
@@ -30,8 +30,10 @@ ExecutionsPerLine: TypeAlias = dict[int, int]
 
 def line_histogram(history: History) -> ExecutionsPerLine:
     result: ExecutionsPerLine = defaultdict(int)
-    for lineno, _ in history:
-        result[lineno] += 1
+    for lineno, item in history:
+        match item:  # Exclude returns and exceptions from the cound
+            case Call(_, _) | Line(_, _):
+                result[lineno] += 1
     return result
 
 

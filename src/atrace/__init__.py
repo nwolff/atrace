@@ -77,7 +77,7 @@ class TException(Capturing):
     """
 
     type: type
-    value: BaseException
+    value: Exception
     traceback: TracebackType
 
 
@@ -288,13 +288,14 @@ class Call:
 
 @dataclass(frozen=True)
 class Return:
+    function_name: str
     return_value: Any
 
 
 @dataclass(frozen=True)
 class Raise:
     type: type
-    value: BaseException
+    value: Exception
     traceback: TracebackType
 
 
@@ -396,7 +397,7 @@ def _trace_to_unpacked_history(trace: Trace) -> UnpackedHistory:
                     yield AssignmentsForLine(activation.last_line_no, a)
 
                 current_globals = globs
-                yield lineno, Return(return_value)
+                yield lineno, Return(activation.function_name, return_value)
                 activations.pop()
 
             case TException(globs, locs, _exception, value, traceback):

@@ -10,7 +10,7 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from . import UNASSIGN, Assignments, Call, History, Line, Raise, Var
+from . import UNASSIGN, Assignments, Call, History, Line, Raise, Return, Var
 
 """
 Takes an execution history and builds an execution table, displaying for each line:
@@ -38,10 +38,6 @@ t = gettext.translation("atrace", str(LOCALE_DIR), fallback=True)
 _ = t.gettext
 
 LINE, OUTPUT, EXCEPTION = _("line"), _("output"), _("exception")
-
-
-def format_variable(var: Var) -> str:
-    return var.name if var.scope == "<module>" else f"({var.scope}) {var.name}"
 
 
 def format_value(value: Any) -> str | None:
@@ -112,6 +108,42 @@ HeaderData: TypeAlias = list[str]
 RowData: TypeAlias = list[str | None]
 TableData: TypeAlias = tuple[HeaderData, list[RowData]]
 
+VarOrFunction: TypeAlias = Var | str
+
+
+def format_col_header(var_or_func: VarOrFunction) -> str:
+    match var_or_func:
+        case Var(scope, name):
+            return name if scope == "<module>" else f"({scope}) {name}"
+        case str():
+            return var_or_func
+
+
+def _prepare_columns(history: History) -> tuple[list[Var | str], bool, bool]:
+    """
+    # - Collect all columns
+    # - Determine if we need an output column in the table.
+    # - Determine if we need an exception column in the table.
+    """
+    raw_cols: list[VarOrFunction] = []
+    history_has_output = False
+    history_has_exception = False
+    for _, item in history:
+        match item:
+            case Call(function_name, bindings):
+                raw_cols.append(function_name)
+                raw_cols.extend(bindings)
+            case Line(assignments, output):
+                raw_cols.extend(assignments)
+                if output:
+                    history_has_output = True
+            case Raise(_, _, _):
+                history_has_exception = True
+
+    # dict.fromkeys() removes duplicates and preserves the order of appearance
+    all_cols = list(dict.fromkeys(raw_cols))
+    return all_cols, history_has_exception, history_has_output
+
 
 def history_to_table_data(history: History) -> TableData:
     """Build an intermediate representation of the trace table where all the data
@@ -120,31 +152,12 @@ def history_to_table_data(history: History) -> TableData:
     history = _filter_functions_in_assignments(history)
     history = _filter_no_effect_lines(history)
 
-    # Prepare:
-    # - Collect all variables in order of appearance.
-    # - Determine if we need an output column in the table.
-    # - Determine if we need an exception column in the table.
-    raw_vars: list[Any] = []
-    history_has_output = False
-    history_has_exception = False
-    for _, item in history:
-        match item:
-            case Call(_, bindings):
-                raw_vars.extend(bindings)
-            case Line(assignments, output):
-                raw_vars.extend(assignments)
-                if output:
-                    history_has_output = True
-            case Raise(_, _, _):
-                history_has_exception = True
-
-    # dict.fromkeys() removes duplicates and preserves the order of appearance
-    all_variables = list(dict.fromkeys(raw_vars))
+    all_cols, history_has_exception, history_has_output = _prepare_columns(history)
 
     # Build headers
     headers = [LINE]
-    for variable in all_variables:
-        headers.append(format_variable(variable))
+    for var_or_func in all_cols:
+        headers.append(format_col_header(var_or_func))
     if history_has_output:
         headers.append(OUTPUT)
     if history_has_exception:
@@ -153,32 +166,40 @@ def history_to_table_data(history: History) -> TableData:
     # Build rows
     rows = []
     for lineno, item in history:
-        item_assignments = {}
-        item_output = None
-        item_exception = None
+        assignments: Assignments = {}
+        output: str | None = None
+        exception: Exception | None = None
+        function_name: str | None = None
+        return_value: Any | None = None
         match item:
-            case Call(_, bindings):
-                item_assignments = bindings
+            case Call(function_name, assignments):
+                pass
             case Line(assignments, output):
-                item_assignments = assignments
-                item_output = output
-            case Raise(_, value, _):
-                item_exception = value
+                pass
+            case Raise(_, exception, _):
+                pass
+            case Return(function_name, return_value):
+                return_value = UNASSIGN if return_value is None else return_value
 
         row: RowData = [str(lineno)]
-        for variable in all_variables:
-            if variable in item_assignments:
-                content = format_value(item_assignments[variable])
-            else:
-                content = None
+        for variable_or_func in all_cols:
+            content = None
+            match variable_or_func:
+                case Var(_, _) as var if var in assignments:
+                    content = format_value(assignments[var])
+                case str() if variable_or_func == function_name:
+                    if return_value is not None:
+                        content = f"{format_value(return_value)} <-"
+                    else:
+                        content = "->"
             row.append(content)
 
         if history_has_output:
-            row.append(format_output(item_output))
+            row.append(format_output(output))
         if history_has_exception:
-            row.append(format_exception(item_exception))
+            row.append(format_exception(exception))
 
-        if item_assignments or item_output or item_exception:
+        if assignments or output or exception or function_name:
             rows.append(row)
 
     return headers, rows

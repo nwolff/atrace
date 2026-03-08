@@ -7,11 +7,9 @@ while x < y:
 
 print("x:", x)
 
-t = 1, "a"
-
 
 def greet(name):
-    message = f"Hello {name}!"
+    message = f"Hi {name}!"
     return message
 
 
