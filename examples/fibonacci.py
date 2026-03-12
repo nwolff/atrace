@@ -23,7 +23,7 @@ def fib_m(n):
     return fib_m(n - 1) + fib_m(n - 2)
 
 
-num = 7
+num = 6
 choice = input("(I)terative, (R)ecursive, or (M)emoized: ").upper()
 
 match choice:

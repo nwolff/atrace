@@ -1,11 +1,18 @@
+import importlib
+import os
 import textwrap
 import unittest
 from unittest import mock
 
 from rich.console import Console
 
-from atrace import UNASSIGN, Call, History, Line, Raise, Return, Var
+from atrace import UNASSIGN, Call, History, Line, Raise, Return, Var, reporter
 from atrace.reporter import history_to_table, history_to_table_data
+
+# The reporter translates texts based on the current locale.
+# We don't want unit tests to depend on that
+os.environ["LANGUAGE"] = "en"
+importlib.reload(reporter)
 
 
 def capture_report(history: History) -> str:
@@ -95,23 +102,21 @@ class TestReporterTableData(unittest.TestCase):
         )
         self.assertEqual(expected_table_data, history_to_table_data(history))
 
-    def test_function_that_returns_nothing(self):
+    def test_function_that_takes_and_returns_nothing(self):
         history: History = [
             # We need to pass a callable, otherwise it gets displayed
-            (1, Line({Var("<module>", "f"): lambda: None}, None)),
+            (1, Line({Var("<module>", "p"): lambda: None}, None)),
             (5, Line({}, None)),
-            (1, Call("f", {Var("f", "x"): 5})),
-            (2, Line({}, None)),
-            (2, Return("f", None)),
+            (1, Call("p", {})),
+            (2, Line({}, "hello\n")),
+            (2, Return("p", None)),
         ]
-        from pprint import pprint
-
-        pprint(history_to_table_data(history))
 
         expected_table_data = (
-            ["line", "f", "(f) x"],
+            ["line", "p", "output"],
             [
-                ["1", "->", "5"],
+                ["1", "->", None],
+                ["2", None, "hello"],
                 ["2", "<-", None],
             ],
         )

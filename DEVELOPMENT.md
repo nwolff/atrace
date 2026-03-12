@@ -1,19 +1,18 @@
 # TODO
 
-## Ideas
+- the site where we call a function is sometimes counted twice in the histogram
 
-- Use rich nested tables to regroup functions and their locals
+# Ideas
+
 - Make the line highlight color more intense as the call depth increases
+- A way to make function calls and returns in the trace more visible. For instance for
+  fibonacci.
 - Speed control / Manual nav / Automaticaly determine the best animation duration
 - In the histogram show a trace for each line of the program, with the history of values
 - Fix jitter in animated_histogram when scrolling (I've read about this in video game
   camera techniques)
 - Capture the animation with Ascii-cinema / moviepy / console.save_svg. Maybe just
   document that.
-
-## Technical
-
-- Tests depend on current locale
 
 # Development
 

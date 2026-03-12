@@ -19,6 +19,31 @@ class TestFunctions(unittest.TestCase):
     def callback_done(self, trace):
         self.trace = trace
 
+    def test_procedure(self):
+        trace_next_loaded_module(self.callback_done)
+        from .snippets import procedure  # noqa
+
+        expected_trace = [
+            (0, TCall({}, {}, "<module>")),
+            (1, TLine({}, {})),
+            (5, TLine({"p": mock.ANY}, {})),
+            (1, TCall({"p": mock.ANY}, {}, "p")),
+            (2, TLine({"p": mock.ANY}, {})),
+            (2, TOutput("hello\n")),
+            (2, TReturn({"p": mock.ANY}, {}, None)),
+            (5, TReturn({"p": mock.ANY}, {}, None)),
+        ]
+        self.assertEqual(expected_trace, self.trace)
+
+        expected_history = [
+            (1, Line({Var("<module>", "p"): mock.ANY}, None)),
+            (5, Line({}, None)),
+            (1, Call("p", {})),
+            (2, Line({}, "hello\n")),
+            (2, Return("p", None)),
+        ]
+        self.assertEqual(expected_history, trace_to_history(self.trace))
+
     def test_function(self):
         trace_next_loaded_module(self.callback_done)
         from .snippets import function  # noqa

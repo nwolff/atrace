@@ -174,6 +174,9 @@ def history_to_table_data(history: History) -> TableData:
         exception: Exception | None = None
         function_name: str | None = None
         return_value: Any | None = NOT_A_RETURN
+
+        # All these cases are capturing variables that we use just below,
+        # they are doing something, despite the `pass`
         match item:
             case Call(function_name, assignments):
                 pass
