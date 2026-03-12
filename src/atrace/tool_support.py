@@ -21,7 +21,7 @@ def add_line_numbers(source: str) -> NumberedLines:
 display_height = Console().size.height - 1
 
 
-def visible_lines(
+def visible_program_lines(
     numbered_lines: NumberedLines, current_lineno: int | None
 ) -> NumberedLines:
     if current_lineno:

@@ -2,8 +2,10 @@
 
 ## Ideas
 
-- Add an animated view showing just the current state (like a debugger)
-- Speed control / Manual nav / Automaticaly determine the best animation length
+- Use rich nested tables to regroup functions and their locals
+- Make the line highlight color more intense as the call depth increases
+- Speed control / Manual nav / Automaticaly determine the best animation duration
+- In the histogram show a trace for each line of the program, with the history of values
 - Fix jitter in animated_histogram when scrolling (I've read about this in video game
   camera techniques)
 - Capture the animation with Ascii-cinema / moviepy / console.save_svg. Maybe just
@@ -91,7 +93,7 @@ Thonny installs packages in the user specific python library directory:
 
 On mac it's something like: ~/Library/Python/3.10/lib/python/site-packages
 
-## Deployment
+# Deployment
 
 Every time we push to main, the code is checked and unittests are run.
 

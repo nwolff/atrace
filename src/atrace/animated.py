@@ -4,15 +4,19 @@ Displays the animated trace of a given python program.
 
 import argparse
 
+from rich.console import Console
 from rich.padding import Padding
 from rich.table import Table
 
 from . import History, Trace, trace_code, trace_to_history
 from .code import CODE_VIEW_WIDTH, generate_code_display
 from .reporter import (
-    history_to_table,
+    history_to_table_data,
+    table_data_to_table,
 )
 from .tool_support import NumberedLines, add_line_numbers, animate
+
+MAX_VISIBLE_ROWS = Console().size.height - 7  # Reserve space for headers/borders
 
 
 def generate_code_and_trace_display(
@@ -37,7 +41,12 @@ def generate_code_and_trace_display(
 def generate_trace_display(
     _numbered_lines: NumberedLines, history: History, _current_lineno: int | None = None
 ) -> Table:
-    return history_to_table(history)
+    headers, rows = history_to_table_data(history)
+
+    if len(rows) > MAX_VISIBLE_ROWS:
+        rows = rows[-MAX_VISIBLE_ROWS:]
+
+    return table_data_to_table((headers, rows))
 
 
 def run():

@@ -9,7 +9,7 @@ from rich.syntax import Syntax
 from rich.table import Table
 
 from . import History, Trace, trace_code, trace_to_history
-from .tool_support import NumberedLines, add_line_numbers, visible_lines
+from .tool_support import NumberedLines, add_line_numbers, visible_program_lines
 
 INTENSE_COLOR = 0, 0, 255
 
@@ -46,7 +46,7 @@ def generate_code_display(
     table = Table(show_header=False, box=None)
     table.add_column("Code", width=CODE_VIEW_WIDTH)
 
-    for lineno, line in visible_lines(numbered_lines, current_lineno):
+    for lineno, line in visible_program_lines(numbered_lines, current_lineno):
         syntax_line = Syntax(
             line,
             "python",

@@ -21,7 +21,7 @@ from .code import (
     add_line_numbers,
     generate_code_display,
 )
-from .tool_support import visible_lines
+from .tool_support import visible_program_lines
 
 BAR_COLOR = "rgb(0, 0, 255)"
 
@@ -47,7 +47,7 @@ def generate_histogram_display(
     table.add_column("Hits", width=int(math.log10(max_executions)) + 2, justify="right")
     table.add_column("Bar", width=30)
 
-    for lineno, line in visible_lines(numbered_lines, current_lineno):
+    for lineno, line in visible_program_lines(numbered_lines, current_lineno):
         num_executions = executions_per_line.get(lineno, 0)
         line_bar = Bar(
             begin=0,

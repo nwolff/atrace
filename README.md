@@ -8,7 +8,7 @@ Automatically prints a trace table of **simple programs**
 
 This module is intended for beginner programmers.
 
-The trace table of examples/small.py is:
+The trace table of [examples/small.py](examples/small.py) is:
 
 ```
 ╭───────┬────┬────┬───────────────┬───────────────┬──────────────────┬──────────╮
@@ -29,11 +29,12 @@ The trace table of examples/small.py is:
 
 The package is available on pypi.
 
-Install the latest version with uv, pip, the Thonny package manager
+Install the latest version with uv, pip, the Thonny package manager, etc.
 
 ## Generating a trace for code under development
 
-Just import the module at the top of your file:
+Just import the module at the top of your file, like
+in [examples/small.py](examples/small.py#L1)
 
 ```
 import atrace 
@@ -43,26 +44,31 @@ x, y = 1, 3
 ```
 
 Every time you run the program the trace table will be printed when the program exits.
+
 The trace is printed even if the program is interrupted or an uncaught exception is
 raised.
 
-## Generating different views and animations of the execution of a program
+Programs that use `input` to interact with the user work, the trace is only printed
+at the end of the execution.
 
-You don't need to import atrace in the programs if you run the tool like this.
+## Running as a tool
 
-To display the trace for a program :
+You can display the trace and other visualizations for existing programs (no
+need to `import atrace` in the program).
 
-    python3 -m atrace examples/small.py
+To display the trace:
 
-To display a line by line animation of the trace :
+    python3 -m atrace examples/fizzbuzz.py
+
+To display a line-by-line animation of the trace:
 
     python3 -m atrace.animated examples/fibonacci.py
 
-To display a histogram of how many times lines are executed in a program :
+To display a histogram of how many times each line in a program is executed:
 
     python3 -m atrace.histogram examples/nested_loops.py
 
-To display a line by line animation of the histogram :
+To display a line-by-line animation of the histogram:
 
     python3 -m atrace.animated_histogram examples/fizzbuzz.py 
 
