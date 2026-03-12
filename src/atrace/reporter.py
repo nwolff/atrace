@@ -145,6 +145,9 @@ def _prepare_columns(history: History) -> tuple[list[Var | str], bool, bool]:
     return all_cols, history_has_exception, history_has_output
 
 
+NOT_A_RETURN = object()
+
+
 def history_to_table_data(history: History) -> TableData:
     """Build an intermediate representation of the trace table where all the data
     has been generated and is properly represented as strings"""
@@ -170,7 +173,7 @@ def history_to_table_data(history: History) -> TableData:
         output: str | None = None
         exception: Exception | None = None
         function_name: str | None = None
-        return_value: Any | None = None
+        return_value: Any | None = NOT_A_RETURN
         match item:
             case Call(function_name, assignments):
                 pass
@@ -179,7 +182,7 @@ def history_to_table_data(history: History) -> TableData:
             case Raise(_, exception, _):
                 pass
             case Return(function_name, return_value):
-                return_value = UNASSIGN if return_value is None else return_value
+                pass
 
         row: RowData = [str(lineno)]
         for variable_or_func in all_cols:
@@ -188,10 +191,12 @@ def history_to_table_data(history: History) -> TableData:
                 case Var(_, _) as var if var in assignments:
                     content = format_value(assignments[var])
                 case str() if variable_or_func == function_name:
-                    if return_value is not None:
-                        content = f"{format_value(return_value)} <-"
-                    else:
+                    if return_value == NOT_A_RETURN:  # Its a call
                         content = "->"
+                    elif return_value is None:
+                        content = "<-"
+                    else:
+                        content = f"{format_value(return_value)} <-"
             row.append(content)
 
         if history_has_output:

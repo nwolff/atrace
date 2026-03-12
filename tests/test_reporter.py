@@ -72,6 +72,8 @@ class TestReporterTableData(unittest.TestCase):
         self.assertEqual(expected_table_data, history_to_table_data(history))
 
     def test_function_print_before_call(self):
+        """This verifies that events happening after we initiated a call get
+        assigned to the line we get to after the return"""
         history: History = [
             # We need to pass a callable, otherwise it gets displayed
             (1, Line({Var("<module>", "double"): lambda: None}, None)),
@@ -89,6 +91,28 @@ class TestReporterTableData(unittest.TestCase):
                 ["1", "->", "5", None, None],
                 ["2", "10 <-", None, None, None],
                 ["6", None, None, "10", None],
+            ],
+        )
+        self.assertEqual(expected_table_data, history_to_table_data(history))
+
+    def test_function_that_returns_nothing(self):
+        history: History = [
+            # We need to pass a callable, otherwise it gets displayed
+            (1, Line({Var("<module>", "f"): lambda: None}, None)),
+            (5, Line({}, None)),
+            (1, Call("f", {Var("f", "x"): 5})),
+            (2, Line({}, None)),
+            (2, Return("f", None)),
+        ]
+        from pprint import pprint
+
+        pprint(history_to_table_data(history))
+
+        expected_table_data = (
+            ["line", "f", "(f) x"],
+            [
+                ["1", "->", "5"],
+                ["2", "<-", None],
             ],
         )
         self.assertEqual(expected_table_data, history_to_table_data(history))
