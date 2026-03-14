@@ -1,29 +1,22 @@
-import importlib
-import os
 import textwrap
 import unittest
 from unittest import mock
 
 from rich.console import Console
+from rich.table import Table
 
-from atrace import UNASSIGN, Call, History, Line, Raise, Return, Var, reporter
-from atrace.reporter import history_to_table, history_to_table_data
-
-# The reporter translates texts based on the current locale.
-# We don't want unit tests to depend on that
-os.environ["LANGUAGE"] = "en"
-importlib.reload(reporter)
+from atrace import UNASSIGN, Call, History, Line, Raise, Return, Var
+from atrace.reporter import LeftAligned, history_to_table, history_to_table_data
 
 
-def capture_report(history: History) -> str:
-    table = history_to_table(history)
+def capture_report(table: Table) -> str:
     console = Console(color_system=None, width=88)
     with console.capture() as capture:
         console.print(table)
     return capture.get()
 
 
-class TestReporterTableData(unittest.TestCase):
+class TestReporter(unittest.TestCase):
     def test_assign_none_unassign(self):
         history: History = [
             (1, Line({Var("<module>", "x"): 1}, None)),
@@ -36,7 +29,7 @@ class TestReporterTableData(unittest.TestCase):
             [
                 ["1", "1"],
                 ["2", "None"],
-                ["3", None],
+                ["3", ""],
                 ["4", '"bob"'],
             ],
         )
@@ -50,8 +43,8 @@ class TestReporterTableData(unittest.TestCase):
         expected_table_data = (
             ["line", "x", "output"],
             [
-                ["1", "1", None],
-                ["2", None, "1"],
+                ["1", "1", ""],
+                ["2", "", "1"],
             ],
         )
         self.assertEqual(expected_table_data, history_to_table_data(history))
@@ -64,16 +57,17 @@ class TestReporterTableData(unittest.TestCase):
             (1, Call("double", {Var("double", "a"): 3})),
             (2, Line({Var("double", "result"): 6}, None)),
             (3, Line({}, None)),
-            (3, Return("double", 6)),
+            (3, Return(6)),
             (6, Line({Var("<module>", "x"): 6}, None)),
         ]
+
         expected_table_data = (
-            ["line", "double", "(double) a", "(double) result", "x"],
+            ["line", LeftAligned("double"), "(double) a", "(double) result", "x"],
             [
-                ["1", "->", "3", None, None],
-                ["2", None, None, "6", None],
-                ["3", "6 <-", None, None, None],
-                ["6", None, None, None, "6"],
+                ["1", "double(3)", "3", "", ""],
+                ["2", "│  ", "", "6", ""],
+                ["3", "└─ 6", "", "", ""],
+                ["6", "", "", "", "6"],
             ],
         )
         self.assertEqual(expected_table_data, history_to_table_data(history))
@@ -88,36 +82,37 @@ class TestReporterTableData(unittest.TestCase):
             (6, Line({}, None)),
             (1, Call("double", {Var("double", "a"): 5})),
             (2, Line({}, None)),
-            (2, Return("double", 10)),
+            (2, Return(10)),
             (6, Line({Var("<module>", "x"): 10}, None)),
         ]
         expected_table_data = (
-            ["line", "double", "(double) a", "x", "output"],
+            ["line", LeftAligned("double"), "(double) a", "x", "output"],
             [
-                ["5", None, None, None, "hahaha"],
-                ["1", "->", "5", None, None],
-                ["2", "10 <-", None, None, None],
-                ["6", None, None, "10", None],
+                ["5", "", "", "", "hahaha"],
+                ["1", "double(5)", "5", "", ""],
+                ["2", "└─ 10", "", "", ""],
+                ["6", "", "", "10", ""],
             ],
         )
         self.assertEqual(expected_table_data, history_to_table_data(history))
 
-    def test_function_that_takes_and_returns_nothing(self):
+    def test_procedure(self):
+        """A function that takes and returns nothing"""
         history: History = [
             # We need to pass a callable, otherwise it gets displayed
             (1, Line({Var("<module>", "p"): lambda: None}, None)),
             (5, Line({}, None)),
             (1, Call("p", {})),
             (2, Line({}, "hello\n")),
-            (2, Return("p", None)),
+            (2, Return(None)),
         ]
 
         expected_table_data = (
-            ["line", "p", "output"],
+            ["line", LeftAligned("p"), "output"],
             [
-                ["1", "->", None],
-                ["2", None, "hello"],
-                ["2", "<-", None],
+                ["1", "p()", ""],
+                ["2", "│  ", "hello"],
+                ["2", "└─ ", ""],
             ],
         )
         self.assertEqual(expected_table_data, history_to_table_data(history))
@@ -133,16 +128,14 @@ class TestReporterTableData(unittest.TestCase):
         expected_table_data = (
             ["line", "x", "output", "exception"],
             [
-                ["1", None, "hai", None],
-                ["2", "1", None, None],
-                ["3", None, None, "Exception('an exception')"],
+                ["1", "", "hai", ""],
+                ["2", "1", "", ""],
+                ["3", "", "", "Exception('an exception')"],
             ],
         )
         self.assertEqual(expected_table_data, history_to_table_data(history))
 
-
-class TestReporterDisplay(unittest.TestCase):
-    def test_small(self):
+    def test_display(self):
         history: History = [
             (3, Line({Var("<module>", "x"): 1, Var("<module>", "y"): 3}, None)),
             (5, Line({}, None)),
@@ -157,21 +150,23 @@ class TestReporterDisplay(unittest.TestCase):
             (11, Call("greet", {Var("greet", "name"): "Bob"})),
             (12, Line({Var("greet", "message"): "Hi Bob!"}, None)),
             (13, Line({}, None)),
-            (13, Return("greet", "Hi Bob!")),
+            (13, Return("Hi Bob!")),
             (16, Line({}, "Hi Bob!\n")),
         ]
         expected_result = """\
     ╭───────┬────┬────┬───────────────┬───────────────┬──────────────────┬──────────╮
-    │  line │  x │  y │         greet │  (greet) name │  (greet) message │   output │
+    │  line │  x │  y │  greet        │  (greet) name │  (greet) message │   output │
     ├───────┼────┼────┼───────────────┼───────────────┼──────────────────┼──────────┤
     │     3 │  1 │  3 │               │               │                  │          │
     │     6 │  2 │    │               │               │                  │          │
     │     6 │  3 │    │               │               │                  │          │
     │     8 │    │    │               │               │                  │     x: 3 │
-    │    11 │    │    │            -> │         "Bob" │                  │          │
-    │    12 │    │    │               │               │        "Hi Bob!" │          │
-    │    13 │    │    │  "Hi Bob!" <- │               │                  │          │
+    │    11 │    │    │  greet("Bob") │         "Bob" │                  │          │
+    │    12 │    │    │  │            │               │        "Hi Bob!" │          │
+    │    13 │    │    │  └─ "Hi Bob!" │               │                  │          │
     │    16 │    │    │               │               │                  │  Hi Bob! │
     ╰───────┴────┴────┴───────────────┴───────────────┴──────────────────┴──────────╯
         """
-        self.assertEqual(textwrap.dedent(expected_result), capture_report(history))
+        self.assertEqual(
+            textwrap.dedent(expected_result), capture_report(history_to_table(history))
+        )

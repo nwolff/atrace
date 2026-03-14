@@ -1,16 +1,14 @@
 # TODO
 
 - the site where we call a function is sometimes counted twice in the histogram
+  (for instance in small.py and expecially countdown.py)
 
-# Ideas
+# Ideas for animations
 
-- Make the line highlight color more intense as the call depth increases
-- A way to make function calls and returns in the trace more visible. For instance for
-  fibonacci.
+- Fix jitter when scrolling (for instance in kitchen_sink.py)
+  I've read about this in video game camera techniques.
 - Speed control / Manual nav / Automaticaly determine the best animation duration
-- In the histogram show a trace for each line of the program, with the history of values
-- Fix jitter in animated_histogram when scrolling (I've read about this in video game
-  camera techniques)
+- Make the line highlight color more intense as the call depth increases
 - Capture the animation with Ascii-cinema / moviepy / console.save_svg. Maybe just
   document that.
 

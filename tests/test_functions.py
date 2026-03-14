@@ -40,7 +40,7 @@ class TestFunctions(unittest.TestCase):
             (5, Line({}, None)),
             (1, Call("p", {})),
             (2, Line({}, "hello\n")),
-            (2, Return("p", None)),
+            (2, Return(None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -67,7 +67,7 @@ class TestFunctions(unittest.TestCase):
             (1, Call("double", {Var("double", "a"): 3})),
             (2, Line({Var("double", "result"): 6}, None)),
             (3, Line({}, None)),
-            (3, Return("double", 6)),
+            (3, Return(6)),
             (6, Line({Var("<module>", "x"): 6}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
@@ -94,7 +94,7 @@ class TestFunctions(unittest.TestCase):
             (6, Line({}, None)),
             (1, Call("double", {Var("double", "a"): 5})),
             (2, Line({}, None)),
-            (2, Return("double", 10)),
+            (2, Return(10)),
             (6, Line({Var("<module>", "x"): 10}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
@@ -122,7 +122,7 @@ class TestFunctions(unittest.TestCase):
             (6, Line({}, None)),
             (1, Call("double", {Var("double", "a"): 5})),
             (2, Line({}, None)),
-            (2, Return("double", 10)),
+            (2, Return(10)),
             (6, Line({Var("<module>", "x"): 10}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
@@ -151,7 +151,7 @@ class TestFunctions(unittest.TestCase):
             (4, Call("f", {Var("f", "a"): 3, Var("f", "b"): 14})),
             (6, Line({Var("<module>", "c"): 17}, None)),
             (7, Line({}, None)),
-            (7, Return("f", 17)),
+            (7, Return(17)),
             (10, Line({Var("<module>", "x"): 34}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
@@ -180,7 +180,7 @@ class TestFunctions(unittest.TestCase):
             (4, Call("f", {Var("f", "a"): 3, Var("f", "b"): 14})),
             (5, Line({Var("f", "c"): 17}, None)),
             (6, Line({}, None)),
-            (6, Return("f", 17)),
+            (6, Return(17)),
             (9, Line({Var("<module>", "x"): 34}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
@@ -218,9 +218,9 @@ class TestFunctions(unittest.TestCase):
             (2, Line({}, None)),
             (1, Call("sum_up_to", {Var("sum_up_to", "x"): 0})),
             (2, Line({}, None)),
-            (2, Return("sum_up_to", 0)),
-            (2, Return("sum_up_to", 1)),
-            (2, Return("sum_up_to", 3)),
+            (2, Return(0)),
+            (2, Return(1)),
+            (2, Return(3)),
             (5, Line({Var("<module>", "result"): 3}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
@@ -266,8 +266,8 @@ class TestFunctions(unittest.TestCase):
             (4, Call("inner", {Var("inner", "a"): 8, Var("inner", "y"): 5})),
             (5, Line({Var("inner", "x"): 13}, None)),
             (6, Line({}, None)),
-            (6, Return("inner", 13)),
-            (8, Return("outer", 13)),
+            (6, Return(13)),
+            (8, Return(13)),
             (11, Line({Var("<module>", "result"): 13}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
@@ -298,7 +298,7 @@ class TestFunctions(unittest.TestCase):
             (7, Line({}, None)),
             (1, Call("f", {Var("f", "name"): "Mike"})),
             (2, Line({}, "Hello Mike\n")),
-            (2, Return("f", None)),
+            (2, Return(None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -323,7 +323,7 @@ class TestFunctions(unittest.TestCase):
             (2, Line({}, None)),
             (1, Call("<lambda>", {Var("<lambda>", "x"): 5, Var("<lambda>", "y"): 3})),
             (1, Line({}, None)),
-            (1, Return("<lambda>", 8)),
+            (1, Return(8)),
             (2, Line({}, "8\n")),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
@@ -367,13 +367,13 @@ class TestFunctions(unittest.TestCase):
             (1, Call("countdown", {Var("countdown", "n"): 1})),
             (2, Line({}, None)),
             (3, Line({}, None)),
-            (3, Return("countdown", 1)),
+            (3, Return(1)),
             (7, Line({Var("<module>", "num"): 1}, None)),
             (8, Line({}, "1\n")),
             (7, Line({}, None)),
             (3, Call("countdown", {Var("countdown", "n"): 1})),
             (4, Line({Var("countdown", "n"): 0}, None)),
             (2, Line({}, None)),
-            (2, Return("countdown", None)),
+            (2, Return(None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))

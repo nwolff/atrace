@@ -4,5 +4,5 @@ def countdown(n):
         n -= 1
 
 
-for num in countdown(10):
+for num in countdown(5):
     print(num)

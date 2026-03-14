@@ -4,6 +4,7 @@ import os
 import pathlib
 import re
 from contextlib import suppress
+from dataclasses import dataclass
 from typing import Any, TypeAlias
 
 from rich import box
@@ -40,22 +41,22 @@ _ = t.gettext
 LINE, OUTPUT, EXCEPTION = _("line"), _("output"), _("exception")
 
 
-def format_value(value: Any) -> str | None:
+def format_value(value: Any) -> str:
     match value:
         case None:
             return "None"
         case _ if value is UNASSIGN:
-            return None
+            return ""
         case _:
             return _human_double_quote(value)
 
 
-def format_output(output: str | None) -> str | None:
-    return output.strip() if output else None
+def format_output(output: str | None) -> str:
+    return output.strip() if output else ""
 
 
-def format_exception(e: BaseException | None) -> str | None:
-    return repr(e) if e else None
+def format_exception(e: BaseException | None) -> str:
+    return repr(e) if e else ""
 
 
 def _human_double_quote(data):
@@ -104,48 +105,55 @@ def _filter_no_effect_lines(history: History) -> History:
     return result
 
 
-HeaderData: TypeAlias = list[str]
+@dataclass(frozen=True)
+class LeftAligned:
+    header: str
+
+
+HeaderData: TypeAlias = str | LeftAligned
 RowData: TypeAlias = list[str | None]
-TableData: TypeAlias = tuple[HeaderData, list[RowData]]
+TableData: TypeAlias = tuple[list[HeaderData], list[RowData]]
 
 VarOrFunction: TypeAlias = Var | str
 
 
-def format_col_header(var_or_func: VarOrFunction) -> str:
-    match var_or_func:
-        case Var(scope, name):
-            return name if scope == "<module>" else f"({scope}) {name}"
-        case str():
-            return var_or_func
-
-
-def _prepare_columns(history: History) -> tuple[list[Var | str], bool, bool]:
+def _prepare(history: History) -> tuple[list[Var | str], bool, bool]:
     """
-    # - Collect all columns
-    # - Determine if we need an output column in the table.
+    # - Collect all variables and functions, in order of appearance in the trace.
     # - Determine if we need an exception column in the table.
+    # - Determine if we need an output column in the table.
     """
-    raw_cols: list[VarOrFunction] = []
+    cols_dict: dict[VarOrFunction, None] = {}
+
+    def add_to_cols(*items):
+        for item in items:
+            cols_dict[item] = None
+
     history_has_output = False
     history_has_exception = False
     for _, item in history:
         match item:
             case Call(function_name, bindings):
-                raw_cols.append(function_name)
-                raw_cols.extend(bindings)
+                add_to_cols(function_name, *bindings)
             case Line(assignments, output):
-                raw_cols.extend(assignments)
-                if output:
+                add_to_cols(*assignments)
+                if output is not None:
                     history_has_output = True
             case Raise(_, _, _):
                 history_has_exception = True
 
-    # dict.fromkeys() removes duplicates and preserves the order of appearance
-    all_cols = list(dict.fromkeys(raw_cols))
-    return all_cols, history_has_exception, history_has_output
+    return list(cols_dict), history_has_exception, history_has_output
 
 
-NOT_A_RETURN = object()
+def header_data(var_or_func: VarOrFunction) -> HeaderData:
+    match var_or_func:
+        case Var(scope, name):
+            return name if scope == "<module>" else f"({scope}) {name}"
+        case str():
+            return LeftAligned(var_or_func)
+
+
+ITS_A_CALL = object()
 
 
 def history_to_table_data(history: History) -> TableData:
@@ -155,51 +163,64 @@ def history_to_table_data(history: History) -> TableData:
     history = _filter_functions_in_assignments(history)
     history = _filter_no_effect_lines(history)
 
-    all_cols, history_has_exception, history_has_output = _prepare_columns(history)
+    all_vars_or_funcs, history_has_exception, history_has_output = _prepare(history)
 
-    # Build headers
-    headers = [LINE]
-    for var_or_func in all_cols:
-        headers.append(format_col_header(var_or_func))
+    # Build table columns
+    headers: list[HeaderData] = [LINE]
+    for var_or_func in all_vars_or_funcs:
+        headers.append(header_data(var_or_func))
     if history_has_output:
         headers.append(OUTPUT)
     if history_has_exception:
         headers.append(EXCEPTION)
 
+    call_stack: list[str] = []
+
+    def recursive_depth(function_name) -> int:
+        return call_stack.count(function_name) if call_stack else 0
+
     # Build rows
     rows = []
-    for lineno, item in history:
+    for lineno, history_item in history:
         assignments: Assignments = {}
         output: str | None = None
         exception: Exception | None = None
         function_name: str | None = None
-        return_value: Any | None = NOT_A_RETURN
+        return_value: Any | None = ITS_A_CALL
 
         # All these cases are capturing variables that we use just below,
         # they are doing something, despite the `pass`
-        match item:
+        match history_item:
             case Call(function_name, assignments):
-                pass
+                call_stack.append(function_name)
             case Line(assignments, output):
                 pass
             case Raise(_, exception, _):
                 pass
-            case Return(function_name, return_value):
-                pass
+            case Return(return_value):
+                function_name = call_stack.pop()
 
         row: RowData = [str(lineno)]
-        for variable_or_func in all_cols:
-            content = None
-            match variable_or_func:
+
+        for var_or_func in all_vars_or_funcs:
+            content = ""
+            match var_or_func:
                 case Var(_, _) as var if var in assignments:
                     content = format_value(assignments[var])
-                case str() if variable_or_func == function_name:
-                    if return_value == NOT_A_RETURN:  # Its a call
-                        content = "->"
-                    elif return_value is None:
-                        content = "<-"
-                    else:
-                        content = f"{format_value(return_value)} <-"
+                case str():
+                    content = "│  " * recursive_depth(var_or_func)
+                    if function_name == var_or_func:
+                        if return_value == ITS_A_CALL:
+                            content = "│  " * (recursive_depth(var_or_func) - 1)
+                            content += f"{function_name}("
+                            content += ",".join(
+                                format_value(v) for v in assignments.values()
+                            )
+                            content += ")"
+                        else:
+                            content += "└─ "
+                            if return_value is not None:
+                                content += format_value(return_value)
             row.append(content)
 
         if history_has_output:
@@ -215,13 +236,20 @@ def history_to_table_data(history: History) -> TableData:
 
 def table_data_to_table(table_data: TableData) -> Table:
     """Generate a rich Table from the given TableData."""
-
     table = Table(box=box.ROUNDED, padding=(0, 1, 0, 2), header_style="none")
+
     headers, rows = table_data
+
     for header in headers:
-        table.add_column(header, justify="right")
+        match header:
+            case LeftAligned(header):
+                table.add_column(header, justify="left")
+            case _:
+                table.add_column(header, justify="right")
+
     for row in rows:
         table.add_row(*row)
+
     return table
 
 
