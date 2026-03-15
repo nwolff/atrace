@@ -66,5 +66,21 @@ select = ["E", "F", "I", "W", "UP"]
 core = "sysmon"
 
 [tool.mypy]
-# Type check the interior of functions without type annotations
+# The basics
+python_version = "3.10"
 check_untyped_defs = true
+
+# The "Bug Catchers"
+no_implicit_optional = true
+warn_return_any = true
+strict_optional = true
+
+# Code Quality
+warn_unused_ignores = true
+warn_redundant_casts = true
+
+
+[[tool.mypy.overrides]]
+module = "atrace.*"
+warn_unreachable = true
+# disallow_untyped_defs = true

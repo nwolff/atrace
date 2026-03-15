@@ -68,7 +68,7 @@ def format_exception(e: BaseException | None) -> str:
     return repr(e) if e else ""
 
 
-def _human_double_quote(data):
+def _human_double_quote(data: Any) -> str:
     """Replace single quotes by double quotes.
     The goal is to represent strings like most humans do.
     It's implemented with a simple regex, and the result may not be valid python
