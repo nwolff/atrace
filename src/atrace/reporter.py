@@ -4,8 +4,7 @@ import os
 import pathlib
 import re
 from contextlib import suppress
-from dataclasses import dataclass
-from typing import Any, TypeAlias
+from typing import Any, NamedTuple, TypeAlias
 
 from rich import box, get_console
 from rich.table import Table
@@ -109,8 +108,7 @@ def _filter_functions_in_assignments(history: History) -> History:
     return result
 
 
-@dataclass(frozen=True)
-class LeftAligned:
+class LeftAligned(NamedTuple):
     header: str
 
 

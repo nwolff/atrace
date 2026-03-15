@@ -5,7 +5,7 @@ from collections.abc import Callable, Generator
 from dataclasses import dataclass
 from itertools import groupby
 from types import FrameType, ModuleType, TracebackType
-from typing import Any, TextIO, TypeAlias
+from typing import Any, NamedTuple, TextIO, TypeAlias
 
 """
 Everything regarding:
@@ -34,56 +34,49 @@ The models and classes that collect the trace.
 Symbols: TypeAlias = dict[str, Any]
 
 
-@dataclass(frozen=True)
-class Capturing:
-    globals: Symbols
-    locals: Symbols
-
-
-@dataclass(frozen=True)
-class TLine(Capturing):
+class TLine(NamedTuple):
     """
     The interpreter is about to execute a new line of code
     or re-execute the condition of a loop
     """
 
+    globals: Symbols
+    locals: Symbols
 
-@dataclass(frozen=True)
-class TCall(Capturing):
+
+class TCall(NamedTuple):
     """
     A function is called or some other code block entered.
-    This is emitted at the point of entering the function.
-
-    One can already see:
-        - The function name
-        - The bound parameters
     """
 
+    globals: Symbols
+    locals: Symbols
     function_name: str
 
 
-@dataclass(frozen=True)
-class TReturn(Capturing):
+class TReturn(NamedTuple):
     """
     A function or other code block is about to return.
     """
 
+    globals: Symbols
+    locals: Symbols
     return_value: Any
 
 
-@dataclass(frozen=True)
-class TException(Capturing):
+class TException(NamedTuple):
     """
     An exception has occurred
     """
 
+    globals: Symbols
+    locals: Symbols
     type: type
     value: Exception
     traceback: TracebackType
 
 
-@dataclass(frozen=True)
-class TOutput:
+class TOutput(NamedTuple):
     """
     Some text was written to stdout
     """
@@ -153,12 +146,10 @@ class OutputLogger:
         frame = sys._getframe(1)
         lineno = frame.f_lineno
 
-        previous = self.trace[-1]
-        if previous:
-            previous_lineno, previous_event = previous
-            if previous_lineno == lineno and isinstance(previous_event, TOutput):
-                self.trace[-1] = lineno, TOutput(previous_event.text + text)
-                return
+        prev_lineno, prev_event = self.trace[-1]
+        if prev_lineno == lineno and isinstance(prev_event, TOutput):
+            self.trace[-1] = lineno, TOutput(prev_event.text + text)
+            return
         self.trace.append((lineno, TOutput(text)))
 
     def flush(self):
@@ -264,8 +255,7 @@ The result of this phase is a History
 """
 
 
-@dataclass(frozen=True)
-class Var:
+class Var(NamedTuple):
     scope: str
     name: str
 
@@ -295,31 +285,26 @@ def diff(scope: str, before: Symbols, after: Symbols) -> Assignments:
     return assignments
 
 
-@dataclass(frozen=True)
-class Call:
+class Call(NamedTuple):
     function_name: str
     bindings: Assignments
 
 
-@dataclass(frozen=True)
-class Return:
+class Return(NamedTuple):
     return_value: Any
 
 
-@dataclass(frozen=True)
-class Raise:
+class Raise(NamedTuple):
     type: type
     value: Exception
     traceback: TracebackType
 
 
-@dataclass(frozen=True)
-class Line:
+class Line(NamedTuple):
     pass
 
 
-@dataclass(frozen=True)
-class LineEffects:
+class LineEffects(NamedTuple):
     assignments: Assignments
     output: str | None
 
