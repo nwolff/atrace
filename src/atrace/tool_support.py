@@ -18,12 +18,11 @@ def add_line_numbers(source: str) -> NumberedLines:
 
 # Scrolling support
 
-display_height = Console().size.height - 1
-
 
 def visible_program_lines(
     numbered_lines: NumberedLines, current_lineno: int | None
 ) -> NumberedLines:
+    display_height = Console().size.height - 1
     if current_lineno:
         start_idx = max(0, current_lineno - display_height)
     else:

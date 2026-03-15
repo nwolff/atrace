@@ -1,3 +1,7 @@
+# Ideas
+
+- Let the user unhide functions
+
 # Ideas for animations
 
 - Fix jitter when scrolling (for instance in kitchen_sink.py)

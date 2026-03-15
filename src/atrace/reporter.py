@@ -7,8 +7,7 @@ from contextlib import suppress
 from dataclasses import dataclass
 from typing import Any, TypeAlias
 
-from rich import box
-from rich.console import Console
+from rich import box, get_console
 from rich.table import Table
 
 from . import (
@@ -28,19 +27,21 @@ Takes an execution history and builds an execution table, displaying for each li
  - The eventual output
 """
 
-# Make localization work in thonny:
-# Thonny does not pass environment variables to the running program,
-# so we dig out the UI language from Thonny's configuration file.
+# When running in thonny:
+# - Use 120 columns for the table (Thonny's shell always reports 80)
+# - Extract the language from the thonny config (because Thonny doesn't pass the
+# language as an # environment variable)
 with suppress(OSError, configparser.Error):
-    if not os.getenv("LANG"):
-        thonny_dir = os.environ.get("THONNY_USER_DIR")
-        if thonny_dir:
-            config_path = os.path.join(thonny_dir, "configuration.ini")
-            config = configparser.ConfigParser()
-            config.read(config_path)
-            language = config.get("general", "language", fallback=None)
-            if language:
-                os.environ["LANG"] = language
+    thonny_dir = os.environ.get("THONNY_USER_DIR")
+    if thonny_dir:  # We're in thonny
+        os.environ["COLUMNS"] = "120"
+
+        config_path = os.path.join(thonny_dir, "configuration.ini")
+        config = configparser.ConfigParser()
+        config.read(config_path)
+        language = config.get("general", "language", fallback=None)
+        if language:
+            os.environ["LANG"] = language
 
 LOCALE_DIR = pathlib.Path(__file__).parent / "locale"
 
@@ -103,8 +104,8 @@ def _filter_functions_in_assignments(history: History) -> History:
     return result
 
 
-def _filter_no_effect_lines(history: History) -> History:
-    """Remove history lines that neither assign nor output."""
+def _filter_no_effect(history: History) -> History:
+    """Remove history items that neither assign nor output."""
     result: History = []
     for lineno, item in history:
         match item:
@@ -172,7 +173,7 @@ def history_to_table_data(history: History) -> TableData:
     has been generated and is properly represented as strings"""
 
     history = _filter_functions_in_assignments(history)
-    history = _filter_no_effect_lines(history)
+    history = _filter_no_effect(history)
 
     all_vars_or_funcs, history_has_exception, history_has_output = _prepare(history)
 
@@ -247,7 +248,9 @@ def history_to_table_data(history: History) -> TableData:
 
 def table_data_to_table(table_data: TableData) -> Table:
     """Generate a rich Table from the given TableData."""
-    table = Table(box=box.ROUNDED, padding=(0, 1, 0, 2), header_style="none")
+
+    # padding goes (top, right, bottom, left)
+    table = Table(box=box.ROUNDED, padding=(0, 1, 0, 1), header_style="none")
 
     headers, rows = table_data
 
@@ -272,5 +275,4 @@ def history_to_table(history: History) -> Table:
 
 def print_history(history: History) -> None:
     table = history_to_table(history)
-    console = Console()
-    console.print(table)
+    get_console().print(table)

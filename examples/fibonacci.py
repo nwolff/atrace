@@ -24,7 +24,7 @@ def fib_m(n):
 
 
 num = 6
-choice = input("(I)terative, (R)ecursive, or (M)emoized: ").upper()
+choice = input("(I)terative\n(R)ecursive\n(M)emoized\n").upper()
 
 match choice:
     case "I":

@@ -16,7 +16,9 @@ from .reporter import (
 )
 from .tool_support import NumberedLines, add_line_numbers, animate
 
-MAX_VISIBLE_ROWS = Console().size.height - 7  # Reserve space for headers/borders
+
+def max_visible_rows():
+    return Console().size.height - 7  # Reserve space for headers/borders
 
 
 def generate_code_and_trace_display(
@@ -43,8 +45,8 @@ def generate_trace_display(
 ) -> Table:
     headers, rows = history_to_table_data(history)
 
-    if len(rows) > MAX_VISIBLE_ROWS:
-        rows = rows[-MAX_VISIBLE_ROWS:]
+    # Only display the rows we have room for, this has the effect of scrolling the rows
+    rows = rows[-max_visible_rows() :]
 
     return table_data_to_table((headers, rows))
 

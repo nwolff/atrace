@@ -36,12 +36,12 @@ def generate_code_display(
         recent_history = history[-TAIL_SIZE:]
         num_items = len(recent_history)
         scale = 1.0 / num_items if num_items > 0 else 1.0
-        trail = {
+        tail = {
             lineno: color_for_intensity((index + 1) * scale)
             for index, (lineno, _) in enumerate(recent_history)
         }
     else:
-        trail = {}
+        tail = {}
 
     table = Table(show_header=False, box=None)
     table.add_column("Code", width=CODE_VIEW_WIDTH)
@@ -54,7 +54,7 @@ def generate_code_display(
             word_wrap=False,
             line_numbers=True,
             start_line=lineno,
-            background_color=trail.get(lineno),
+            background_color=tail.get(lineno),
             highlight_lines={lineno} if lineno == current_lineno else None,
         )
 
@@ -77,9 +77,9 @@ def run():
         history = trace_to_history(trace)
         numbered_lines = add_line_numbers(source)
         console = Console()
-        console.print()  # Prints a blank line
+        console.print()
         console.print(generate_code_display(numbered_lines, history))
-        console.print()  # Prints a blank line
+        console.print()
 
     trace_code(source, on_trace)
 
