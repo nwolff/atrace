@@ -4,6 +4,7 @@ from unittest import mock
 from atrace import (
     UNASSIGN,
     Line,
+    LineEffects,
     Raise,
     TCall,
     TException,
@@ -39,8 +40,9 @@ class TestAbruptTermination(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "x"): 1}, None)),
-            (3, Line({}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "x"): 1}, None)),
+            (3, Line()),
             (3, Raise(mock.ANY, mock.ANY, mock.ANY)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
@@ -72,9 +74,11 @@ class TestAbruptTermination(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({}, "hai\n")),
-            (2, Line({Var("<module>", "x"): 1}, None)),
-            (3, Line({}, None)),
+            (1, Line()),
+            (1, LineEffects({}, "hai\n")),
+            (2, Line()),
+            (2, LineEffects({Var("<module>", "x"): 1}, None)),
+            (3, Line()),
             (3, Raise(mock.ANY, mock.ANY, mock.ANY)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
@@ -100,10 +104,12 @@ class TestAbruptTermination(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({}, None)),
-            (2, Line({}, None)),
+            (1, Line()),
+            (2, Line()),
             (2, Raise(mock.ANY, mock.ANY, mock.ANY)),
-            (3, Line({Var("<module>", "e"): mock.ANY}, None)),
-            (4, Line({Var("<module>", "e"): UNASSIGN}, "error message\n")),
+            (3, Line()),
+            (3, LineEffects({Var("<module>", "e"): mock.ANY}, None)),
+            (4, Line()),
+            (4, LineEffects({Var("<module>", "e"): UNASSIGN}, "error message\n")),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))

@@ -4,6 +4,7 @@ from unittest import mock
 from atrace import (
     Call,
     Line,
+    LineEffects,
     Return,
     TCall,
     TLine,
@@ -36,10 +37,12 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "p"): mock.ANY}, None)),
-            (5, Line({}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "p"): mock.ANY}, None)),
+            (5, Line()),
             (1, Call("p", {})),
-            (2, Line({}, "hello\n")),
+            (2, Line()),
+            (2, LineEffects({}, "hello\n")),
             (2, Return(None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
@@ -62,17 +65,19 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "double"): mock.ANY}, None)),
-            (6, Line({}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "double"): mock.ANY}, None)),
+            (6, Line()),
             (1, Call("double", {Var("double", "a"): 3})),
-            (2, Line({Var("double", "result"): 6}, None)),
-            (3, Line({}, None)),
+            (2, Line()),
+            (2, LineEffects({Var("double", "result"): 6}, None)),
+            (3, Line()),
             (3, Return(6)),
-            (6, Line({Var("<module>", "x"): 6}, None)),
+            (6, LineEffects({Var("<module>", "x"): 6}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
-    def test_function_assign_before_call(self):
+    def test_assign_before_call(self):
         trace_next_loaded_module(self.callback_done)
         from .snippets import function_assign_before_call  # noqa
 
@@ -89,17 +94,19 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "double"): mock.ANY}, None)),
-            (5, Line({Var("<module>", "x"): 3}, None)),
-            (6, Line({}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "double"): mock.ANY}, None)),
+            (5, Line()),
+            (5, LineEffects({Var("<module>", "x"): 3}, None)),
+            (6, Line()),
             (1, Call("double", {Var("double", "a"): 5})),
-            (2, Line({}, None)),
+            (2, Line()),
             (2, Return(10)),
-            (6, Line({Var("<module>", "x"): 10}, None)),
+            (6, LineEffects({Var("<module>", "x"): 10}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
-    def test_function_print_before_call(self):
+    def test_print_before_call(self):
         trace_next_loaded_module(self.callback_done)
         from .snippets import function_print_before_call  # noqa
 
@@ -117,13 +124,15 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "double"): mock.ANY}, None)),
-            (5, Line({}, "hahaha\n")),
-            (6, Line({}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "double"): mock.ANY}, None)),
+            (5, Line()),
+            (5, LineEffects({}, "hahaha\n")),
+            (6, Line()),
             (1, Call("double", {Var("double", "a"): 5})),
-            (2, Line({}, None)),
+            (2, Line()),
             (2, Return(10)),
-            (6, Line({Var("<module>", "x"): 10}, None)),
+            (6, LineEffects({Var("<module>", "x"): 10}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -145,14 +154,17 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "c"): "start"}, None)),
-            (4, Line({Var("<module>", "f"): mock.ANY}, None)),
-            (10, Line({}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "c"): "start"}, None)),
+            (4, Line()),
+            (4, LineEffects({Var("<module>", "f"): mock.ANY}, None)),
+            (10, Line()),
             (4, Call("f", {Var("f", "a"): 3, Var("f", "b"): 14})),
-            (6, Line({Var("<module>", "c"): 17}, None)),
-            (7, Line({}, None)),
+            (6, Line()),
+            (6, LineEffects({Var("<module>", "c"): 17}, None)),
+            (7, Line()),
             (7, Return(17)),
-            (10, Line({Var("<module>", "x"): 34}, None)),
+            (10, LineEffects({Var("<module>", "x"): 34}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -174,18 +186,21 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "c"): "start"}, None)),
-            (4, Line({Var("<module>", "f"): mock.ANY}, None)),
-            (9, Line({}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "c"): "start"}, None)),
+            (4, Line()),
+            (4, LineEffects({Var("<module>", "f"): mock.ANY}, None)),
+            (9, Line()),
             (4, Call("f", {Var("f", "a"): 3, Var("f", "b"): 14})),
-            (5, Line({Var("f", "c"): 17}, None)),
-            (6, Line({}, None)),
+            (5, Line()),
+            (5, LineEffects({Var("f", "c"): 17}, None)),
+            (6, Line()),
             (6, Return(17)),
-            (9, Line({Var("<module>", "x"): 34}, None)),
+            (9, LineEffects({Var("<module>", "x"): 34}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
-    def test_function_with_recursion(self):
+    def test_recursion(self):
         trace_next_loaded_module(self.callback_done)
         from .snippets import function_with_recursion  # noqa
 
@@ -210,22 +225,23 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "sum_up_to"): mock.ANY}, None)),
-            (5, Line({}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "sum_up_to"): mock.ANY}, None)),
+            (5, Line()),
             (1, Call("sum_up_to", {Var("sum_up_to", "x"): 2})),
-            (2, Line({}, None)),
+            (2, Line()),
             (1, Call("sum_up_to", {Var("sum_up_to", "x"): 1})),
-            (2, Line({}, None)),
+            (2, Line()),
             (1, Call("sum_up_to", {Var("sum_up_to", "x"): 0})),
-            (2, Line({}, None)),
+            (2, Line()),
             (2, Return(0)),
             (2, Return(1)),
             (2, Return(3)),
-            (5, Line({Var("<module>", "result"): 3}, None)),
+            (5, LineEffects({Var("<module>", "result"): 3}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
-    def test_function_nested(self):
+    def test_nested_functions(self):
         trace_next_loaded_module(self.callback_done)
         from .snippets import function_nested  # noqa
 
@@ -256,19 +272,23 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "outer"): mock.ANY}, None)),
-            (11, Line({}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "outer"): mock.ANY}, None)),
+            (11, Line()),
             (1, Call("outer", {Var("outer", "x"): 4})),
-            (2, Line({Var("outer", "y"): 5}, None)),
-            (4, Line({Var("outer", "inner"): mock.ANY}, None)),
-            (8, Line({}, None)),
+            (2, Line()),
+            (2, LineEffects({Var("outer", "y"): 5}, None)),
+            (4, Line()),
+            (4, LineEffects({Var("outer", "inner"): mock.ANY}, None)),
+            (8, Line()),
             # Closures in action!
             (4, Call("inner", {Var("inner", "a"): 8, Var("inner", "y"): 5})),
-            (5, Line({Var("inner", "x"): 13}, None)),
-            (6, Line({}, None)),
+            (5, Line()),
+            (5, LineEffects({Var("inner", "x"): 13}, None)),
+            (6, Line()),
             (6, Return(13)),
             (8, Return(13)),
-            (11, Line({Var("<module>", "result"): 13}, None)),
+            (11, LineEffects({Var("<module>", "result"): 13}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -293,16 +313,19 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "f"): mock.ANY}, None)),
-            (5, Line({Var("<module>", "greet"): mock.ANY}, None)),
-            (7, Line({}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "f"): mock.ANY}, None)),
+            (5, Line()),
+            (5, LineEffects({Var("<module>", "greet"): mock.ANY}, None)),
+            (7, Line()),
             (1, Call("f", {Var("f", "name"): "Mike"})),
-            (2, Line({}, "Hello Mike\n")),
+            (2, Line()),
+            (2, LineEffects({}, "Hello Mike\n")),
             (2, Return(None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
-    def test_function_lambda(self):
+    def test_lambda(self):
         trace_next_loaded_module(self.callback_done)
         from .snippets import function_lambda  # noqa
 
@@ -319,16 +342,17 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "add"): mock.ANY}, None)),
-            (2, Line({}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "add"): mock.ANY}, None)),
+            (2, Line()),
             (1, Call("<lambda>", {Var("<lambda>", "x"): 5, Var("<lambda>", "y"): 3})),
-            (1, Line({}, None)),
+            (1, Line()),
             (1, Return(8)),
-            (2, Line({}, "8\n")),
+            (2, LineEffects({}, "8\n")),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
-    def test_function_generator(self):
+    def test_generator(self):
         trace_next_loaded_module(self.callback_done)
         from .snippets import function_generator  # noqa
 
@@ -362,18 +386,21 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "countdown"): mock.ANY}, None)),
-            (7, Line({}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "countdown"): mock.ANY}, None)),
+            (7, Line()),
             (1, Call("countdown", {Var("countdown", "n"): 1})),
-            (2, Line({}, None)),
-            (3, Line({}, None)),
+            (2, Line()),
+            (3, Line()),
             (3, Return(1)),
-            (7, Line({Var("<module>", "num"): 1}, None)),
-            (8, Line({}, "1\n")),
-            (7, Line({}, None)),
+            (7, LineEffects({Var("<module>", "num"): 1}, None)),
+            (8, Line()),
+            (8, LineEffects({}, "1\n")),
+            (7, Line()),
             (3, Call("countdown", {Var("countdown", "n"): 1})),
-            (4, Line({Var("countdown", "n"): 0}, None)),
-            (2, Line({}, None)),
+            (4, Line()),
+            (4, LineEffects({Var("countdown", "n"): 0}, None)),
+            (2, Line()),
             (2, Return(None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))

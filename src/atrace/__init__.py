@@ -298,13 +298,18 @@ class Raise:
     traceback: TracebackType
 
 
-@dataclass(frozen=True)
+@dataclass
 class Line:
+    pass
+
+
+@dataclass
+class LineEffects:
     assignments: Assignments
     output: str | None
 
 
-HistoryItem: TypeAlias = tuple[int, Line | Call | Return | Raise]
+HistoryItem: TypeAlias = tuple[int, Line | LineEffects | Call | Return | Raise]
 History: TypeAlias = list[HistoryItem]
 
 
@@ -323,12 +328,6 @@ def diff(scope: str, before: Symbols, after: Symbols) -> Assignments:
     return assignments
 
 
-@dataclass
-class MutableLine:
-    assignments: Assignments
-    output: str | None
-
-
 @dataclass(frozen=True)
 class AssignmentsForLine:
     lineno: int
@@ -343,7 +342,7 @@ class OutputForLine:
 
 # An intermediate data structure in which the Assignments and Output are still separate
 UnpackedHistory: TypeAlias = Iterable[
-    tuple[int, MutableLine | Call | Return | Raise] | AssignmentsForLine | OutputForLine
+    tuple[int, Line | Call | Return | Raise] | AssignmentsForLine | OutputForLine
 ]
 
 
@@ -384,7 +383,7 @@ def _trace_to_unpacked_history(trace: Trace) -> UnpackedHistory:
                 if a:
                     yield AssignmentsForLine(activation.last_line_no, a)
 
-                yield lineno, MutableLine({}, None)
+                yield lineno, Line()
                 current_globals = globs
                 activation.locals = locs
                 activation.last_line_no = lineno
@@ -413,34 +412,28 @@ def _trace_to_unpacked_history(trace: Trace) -> UnpackedHistory:
                 yield OutputForLine(activation.last_line_no, text)
 
 
-MutableHistory: TypeAlias = list[tuple[int, MutableLine | Call | Return | Raise]]
+def _merge_effects(unpacked: UnpackedHistory) -> History:
+    """Merge outputs and assignments into LineEffect objects.
 
-
-def _merge_assignments_and_outputs(unpacked: UnpackedHistory) -> MutableHistory:
-    """Merge outputs and assignments into the *preceding* Line object.
     This is not a generator because we mutate things after we yield them,
     we don't want anyone to be sensitive to that."""
-    history: MutableHistory = []
-    target: MutableLine | None = None
+    history: History = []
+    target: LineEffects | None = None
 
     for x in unpacked:
         match x:
-            case lineno, MutableLine(_, _) as ml:
-                target = ml
-                history.append((lineno, ml))  # type: ignore
-
             case AssignmentsForLine(target_lineno, assignments):
                 if target:
                     target.assignments = assignments
                 else:
-                    target = MutableLine(assignments, None)
+                    target = LineEffects(assignments, None)
                     history.append((target_lineno, target))
 
             case OutputForLine(target_lineno, text):
                 if target:
                     target.output = text
                 else:
-                    target = MutableLine({}, text)
+                    target = LineEffects({}, text)
                     history.append((target_lineno, target))
 
             case lineno, item:
@@ -448,19 +441,6 @@ def _merge_assignments_and_outputs(unpacked: UnpackedHistory) -> MutableHistory:
                 history.append((lineno, item))
 
     return history
-
-
-def _freeze(merged: MutableHistory) -> History:
-    result: History = []
-    for lineno, item in merged:
-        match item:
-            case MutableLine(assignments, output):
-                result.append((lineno, Line(assignments, output)))
-
-            case _:
-                result.append((lineno, item))
-
-    return result
 
 
 def _filter_artifacts(history: History) -> History:
@@ -482,9 +462,8 @@ def _filter_artifacts(history: History) -> History:
 
 def trace_to_history(trace: Trace) -> History:
     unpacked = _trace_to_unpacked_history(trace)
-    merged = _merge_assignments_and_outputs(unpacked)
-    frozen = _freeze(merged)
-    return _filter_artifacts(frozen)
+    merged = _merge_effects(unpacked)
+    return _filter_artifacts(merged)
 
 
 ###############################################################################

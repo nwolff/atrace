@@ -1,14 +1,8 @@
-# TODO
-
-- the site where we call a function is sometimes counted twice in the histogram
-  (for instance in small.py and expecially countdown.py)
-
 # Ideas for animations
 
 - Fix jitter when scrolling (for instance in kitchen_sink.py)
   I've read about this in video game camera techniques.
 - Speed control / Manual nav / Automaticaly determine the best animation duration
-- Make the line highlight color more intense as the call depth increases
 - Capture the animation with Ascii-cinema / moviepy / console.save_svg. Maybe just
   document that.
 

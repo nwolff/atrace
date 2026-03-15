@@ -7,7 +7,7 @@ Displays an animation of a given program, with :
 import argparse
 
 from . import Trace, trace_code, trace_to_history
-from .histogram import generate_code_and_histogram_display
+from .histogram import filter_events, generate_code_and_histogram_display
 from .tool_support import add_line_numbers, animate
 
 
@@ -23,7 +23,7 @@ def run():
 
     def on_trace(trace: Trace) -> None:
         numbered_lines = add_line_numbers(source)
-        history = trace_to_history(trace)
+        history = filter_events(trace_to_history(trace))
         animate(numbered_lines, history, generate_code_and_histogram_display)
 
     trace_code(source, on_trace)

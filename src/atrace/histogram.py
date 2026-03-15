@@ -6,7 +6,7 @@ Displays a view of a given program, with :
 
 import argparse
 import math
-from collections import defaultdict
+from collections import Counter
 from typing import TypeAlias
 
 from rich.bar import Bar
@@ -28,13 +28,20 @@ BAR_COLOR = "rgb(0, 0, 255)"
 ExecutionsPerLine: TypeAlias = dict[int, int]
 
 
-def line_histogram(history: History) -> ExecutionsPerLine:
-    result: ExecutionsPerLine = defaultdict(int)
+def filter_events(history: History) -> History:
+    """Keep only events that are interesting for the histogram."""
+    result: History = []
     for lineno, item in history:
-        match item:  # Exclude returns and exceptions from the cound
-            case Call(_, _) | Line(_, _):
-                result[lineno] += 1
+        match item:
+            case Call(_, _) | Line():
+                result.append((lineno, item))
+            case _:
+                pass
     return result
+
+
+def line_histogram(history: History) -> ExecutionsPerLine:
+    return Counter(lineno for lineno, _ in history)
 
 
 def generate_histogram_display(
@@ -91,8 +98,8 @@ def run():
         source = content_file.read()
 
     def on_trace(trace: Trace) -> None:
-        history = trace_to_history(trace)
         numbered_lines = add_line_numbers(source)
+        history = filter_events(trace_to_history(trace))
         console = Console()
         console.print(generate_code_and_histogram_display(numbered_lines, history))
 

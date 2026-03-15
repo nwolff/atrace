@@ -5,6 +5,7 @@ from atrace import (
     UNASSIGN,
     History,
     Line,
+    LineEffects,
     TCall,
     TLine,
     TOutput,
@@ -35,7 +36,7 @@ class TestSimple(unittest.TestCase):
         ]
         self.assertEqual(expected_trace, self.trace)
 
-        expected_history: History = [(0, Line({}, None))]
+        expected_history: History = [(0, Line())]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_single_assignment(self):
@@ -51,7 +52,8 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "x"): 1}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "x"): 1}, None)),
         ]
         self.assertEqual(
             expected_history,
@@ -73,10 +75,14 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "x"): 1}, None)),
-            (2, Line({Var("<module>", "x"): None}, None)),
-            (3, Line({Var("<module>", "x"): UNASSIGN}, None)),
-            (4, Line({Var("<module>", "x"): "bob"}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "x"): 1}, None)),
+            (2, Line()),
+            (2, LineEffects({Var("<module>", "x"): None}, None)),
+            (3, Line()),
+            (3, LineEffects({Var("<module>", "x"): UNASSIGN}, None)),
+            (4, Line()),
+            (4, LineEffects({Var("<module>", "x"): "bob"}, None)),
         ]
         self.assertEqual(
             expected_history,
@@ -96,7 +102,8 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "x"): 1, Var("<module>", "y"): 2}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "x"): 1, Var("<module>", "y"): 2}, None)),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -115,8 +122,10 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history: History = [
-            (1, Line({}, "hello world!\n")),
-            (2, Line({}, "goodbye\n")),
+            (1, Line()),
+            (1, LineEffects({}, "hello world!\n")),
+            (2, Line()),
+            (2, LineEffects({}, "goodbye\n")),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -134,8 +143,10 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "x"): 1}, None)),
-            (2, Line({}, "1\n")),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "x"): 1}, None)),
+            (2, Line()),
+            (2, LineEffects({}, "1\n")),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -159,8 +170,10 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "x"): "Bob"}, None)),
-            (2, Line({}, "Hello Bob\n")),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "x"): "Bob"}, None)),
+            (2, Line()),
+            (2, LineEffects({}, "Hello Bob\n")),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -182,12 +195,15 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "x"): 0}, None)),
-            (2, Line({}, None)),
-            (3, Line({Var("<module>", "x"): 1}, None)),
-            (2, Line({}, None)),
-            (3, Line({Var("<module>", "x"): 2}, None)),
-            (2, Line({}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "x"): 0}, None)),
+            (2, Line()),
+            (3, Line()),
+            (3, LineEffects({Var("<module>", "x"): 1}, None)),
+            (2, Line()),
+            (3, Line()),
+            (3, LineEffects({Var("<module>", "x"): 2}, None)),
+            (2, Line()),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -213,13 +229,19 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "i"): 0}, None)),
-            (2, Line({}, "0\n")),
-            (1, Line({Var("<module>", "i"): 1}, None)),
-            (2, Line({}, "1\n")),
-            (1, Line({Var("<module>", "i"): 2}, None)),
-            (2, Line({}, "2\n")),
-            (1, Line({}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "i"): 0}, None)),
+            (2, Line()),
+            (2, LineEffects({}, "0\n")),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "i"): 1}, None)),
+            (2, Line()),
+            (2, LineEffects({}, "1\n")),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "i"): 2}, None)),
+            (2, Line()),
+            (2, LineEffects({}, "2\n")),
+            (1, Line()),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -243,12 +265,15 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "lst"): ["a", "b"]}, None)),
-            (2, Line({}, None)),
-            (3, Line({Var("<module>", "lst"): ["b"]}, "a\n")),
-            (2, Line({}, None)),
-            (3, Line({Var("<module>", "lst"): []}, "b\n")),
-            (2, Line({}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "lst"): ["a", "b"]}, None)),
+            (2, Line()),
+            (3, Line()),
+            (3, LineEffects({Var("<module>", "lst"): ["b"]}, "a\n")),
+            (2, Line()),
+            (3, Line()),
+            (3, LineEffects({Var("<module>", "lst"): []}, "b\n")),
+            (2, Line()),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -263,23 +288,22 @@ class TestSimple(unittest.TestCase):
             (1, TLine({}, {"x": 0})),
             (1, TLine({}, {"x": 1})),
             (1, TLine({}, {"x": 2})),
-            (1, TLine({}, {"x": 3})),
-            (1, TReturn({"lst": [0, 1, 4, 9]}, {}, None)),
+            (1, TReturn({"lst": [0, 1, 4]}, {}, None)),
         ]
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (1, Line({Var("<module>", "x"): 0}, None)),
-            (1, Line({Var("<module>", "x"): 1}, None)),
-            (1, Line({Var("<module>", "x"): 2}, None)),
-            (1, Line({Var("<module>", "x"): 3}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "x"): 0}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "x"): 1}, None)),
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "x"): 2}, None)),
+            (1, Line()),
             (
                 1,
-                Line(
-                    {
-                        Var("<module>", "lst"): [0, 1, 4, 9],
-                        Var("<module>", "x"): UNASSIGN,
-                    },
+                LineEffects(
+                    {Var("<module>", "lst"): [0, 1, 4], Var("<module>", "x"): UNASSIGN},
                     None,
                 ),
             ),
@@ -304,9 +328,11 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
-            (2, Line(assignments={Var(scope="<module>", name="i"): 0}, output="0\n")),
-            (2, Line(assignments={Var(scope="<module>", name="i"): 1}, output="1\n")),
-            (2, Line(assignments={}, output=None)),
+            (2, Line()),
+            (2, LineEffects({Var("<module>", "i"): 0}, "0\n")),
+            (2, Line()),
+            (2, LineEffects({Var("<module>", "i"): 1}, "1\n")),
+            (2, Line()),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -325,10 +351,13 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history = [
+            (2, Line()),
             (
                 2,
-                Line({Var("<module>", "y"): 10, Var("<module>", "x"): 3}, "15\nha\n"),
-            )
+                LineEffects(
+                    {Var("<module>", "y"): 10, Var("<module>", "x"): 3}, "15\nha\n"
+                ),
+            ),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
@@ -347,7 +376,8 @@ class TestSimple(unittest.TestCase):
         self.assertEqual(expected_trace, self.trace)
 
         expected_history: History = [
-            (1, Line({}, None)),
-            (3, Line({}, "3.141592653589793\n")),
+            (1, Line()),
+            (3, Line()),
+            (3, LineEffects({}, "3.141592653589793\n")),
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))

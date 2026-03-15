@@ -11,7 +11,16 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from . import UNASSIGN, Assignments, Call, History, Line, Raise, Return, Var
+from . import (
+    UNASSIGN,
+    Assignments,
+    Call,
+    History,
+    LineEffects,
+    Raise,
+    Return,
+    Var,
+)
 
 """
 Takes an execution history and builds an execution table, displaying for each line:
@@ -85,8 +94,10 @@ def _filter_functions_in_assignments(history: History) -> History:
         match item:
             case Call(function_name, bindings):
                 result.append((lineno, Call(function_name, remove_functions(bindings))))
-            case Line(assignments, output):
-                result.append((lineno, Line(remove_functions(assignments), output)))
+            case LineEffects(assignments, output):
+                result.append(
+                    (lineno, LineEffects(remove_functions(assignments), output))
+                )
             case _:
                 result.append((lineno, item))
     return result
@@ -97,7 +108,7 @@ def _filter_no_effect_lines(history: History) -> History:
     result: History = []
     for lineno, item in history:
         match item:
-            case Line(assignments, output):
+            case LineEffects(assignments, output):
                 if assignments or output:
                     result.append((lineno, item))
             case _:
@@ -135,7 +146,7 @@ def _prepare(history: History) -> tuple[list[Var | str], bool, bool]:
         match item:
             case Call(function_name, bindings):
                 add_to_cols(function_name, *bindings)
-            case Line(assignments, output):
+            case LineEffects(assignments, output):
                 add_to_cols(*assignments)
                 if output is not None:
                     history_has_output = True
@@ -193,7 +204,7 @@ def history_to_table_data(history: History) -> TableData:
         match history_item:
             case Call(function_name, assignments):
                 call_stack.append(function_name)
-            case Line(assignments, output):
+            case LineEffects(assignments, output):
                 pass
             case Raise(_, exception, _):
                 pass
