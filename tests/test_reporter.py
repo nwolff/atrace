@@ -33,7 +33,7 @@ class TestReporter(unittest.TestCase):
             [
                 ["1", "1"],
                 ["2", "None"],
-                ["3", ""],
+                ["3", "✖"],
                 ["4", '"bob"'],
             ],
         )

@@ -55,7 +55,7 @@ def format_value(value: Any) -> str:
         case None:
             return "None"
         case _ if value is UNASSIGN:
-            return ""
+            return "✖"  # — ⌫ · ⬚
         case _:
             return _human_double_quote(value)
 
@@ -113,7 +113,7 @@ class LeftAligned(NamedTuple):
 
 
 HeaderData: TypeAlias = str | LeftAligned
-RowData: TypeAlias = list[str | None]
+RowData: TypeAlias = list[str]
 TableData: TypeAlias = tuple[list[HeaderData], list[RowData]]
 
 VarOrFunction: TypeAlias = Var | str
