@@ -207,6 +207,52 @@ class TestSimple(unittest.TestCase):
         ]
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
+    def test_while_with_print(self):
+        trace_next_loaded_module(self.callback_done)
+
+        from .snippets import reverse  # noqa
+
+        expected_trace = [
+            (0, TCall({}, {}, "<module>")),
+            (1, TLine({}, {})),
+            (3, TLine({"letters": ["a", "a"]}, {})),
+            (4, TLine({"letters": ["a", "a"]}, {})),
+            (5, TLine({"letters": ["a"], "letter": "a"}, {})),
+            (5, TOutput("a\n")),
+            (3, TLine({"letters": ["a"], "letter": "a"}, {})),
+            (4, TLine({"letters": ["a"], "letter": "a"}, {})),
+            (5, TLine({"letters": [], "letter": "a"}, {})),
+            (5, TOutput("a\n")),
+            (3, TLine({"letters": [], "letter": "a"}, {})),
+            (3, TReturn({"letters": [], "letter": "a"}, {}, None)),
+        ]
+        self.assertEqual(expected_trace, self.trace)
+
+        expected_history = [
+            (1, Line()),
+            (1, LineEffects({Var("<module>", "letters"): ["a", "a"]}, None)),
+            (3, Line()),
+            (4, Line()),
+            (
+                4,
+                LineEffects(
+                    {Var("<module>", "letters"): ["a"], Var("<module>", "letter"): "a"},
+                    None,
+                ),
+            ),
+            (5, Line()),
+            (5, LineEffects({}, "a\n")),
+            (3, Line()),
+            (4, Line()),
+            # This is not a bug, `letter` is again "a" so there is no assignment to it
+            (4, LineEffects({Var("<module>", "letters"): []}, None)),
+            (5, Line()),
+            (5, LineEffects({}, "a\n")),
+            (3, Line()),
+        ]
+
+        self.assertEqual(expected_history, trace_to_history(self.trace))
+
     def test_for_with_print(self):
         trace_next_loaded_module(self.callback_done)
 
