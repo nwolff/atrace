@@ -1,8 +1,9 @@
 import copy
 import inspect
 import sys
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Generator
 from dataclasses import dataclass
+from itertools import groupby
 from types import FrameType, ModuleType, TracebackType
 from typing import Any, TextIO, TypeAlias
 
@@ -232,12 +233,11 @@ class Tracer:
             self.trace.append((frame.f_lineno, trace_event))
 
         # Detect if we are leaving the module we wanted to trace.
-        # Unload if the job is done.
         if (
             event == "return"
             and frame.f_code.co_filename == self.filename_of_interest
             and frame.f_code.co_name == CONAME
-        ):
+        ):  # Unload if the job is done.
             self.unload()
             return None
 
@@ -257,8 +257,8 @@ class Tracer:
 ###############################################################################
 
 Takes a raw trace to make sense of it:
-    - Detects variable assignments and the line where they occurred
-    - Coalesces subsequent outputs that happen on the same line together
+    - Assigns variable assignments and outputs to the line where they occurred
+    - Coalesces effects that happen on the same line together
 
 The result of this phase is a History
 """
@@ -280,6 +280,21 @@ UNASSIGN = Unassign()
 Assignments: TypeAlias = dict[Var, Any]
 
 
+def diff(scope: str, before: Symbols, after: Symbols) -> Assignments:
+    assignments = {}
+
+    # New variables or changes
+    for var, val in after.items():
+        if var not in before or val != before[var]:
+            assignments[Var(scope, var)] = val
+
+    # Variables that were unassigned
+    for unassigned in before.keys() - after.keys():
+        assignments[Var(scope, unassigned)] = UNASSIGN
+
+    return assignments
+
+
 @dataclass(frozen=True)
 class Call:
     function_name: str
@@ -298,12 +313,12 @@ class Raise:
     traceback: TracebackType
 
 
-@dataclass
+@dataclass(frozen=True)
 class Line:
     pass
 
 
-@dataclass
+@dataclass(frozen=True)
 class LineEffects:
     assignments: Assignments
     output: str | None
@@ -313,39 +328,6 @@ HistoryItem: TypeAlias = tuple[int, Line | LineEffects | Call | Return | Raise]
 History: TypeAlias = list[HistoryItem]
 
 
-def diff(scope: str, before: Symbols, after: Symbols) -> Assignments:
-    assignments = {}
-
-    # New variables or changes
-    for var, val in after.items():
-        if var not in before or val != before[var]:
-            assignments[Var(scope, var)] = val
-
-    # Variables that were unassigned
-    for unassigned in before.keys() - after.keys():
-        assignments[Var(scope, unassigned)] = UNASSIGN
-
-    return assignments
-
-
-@dataclass(frozen=True)
-class AssignmentsForLine:
-    lineno: int
-    assignments: Assignments
-
-
-@dataclass(frozen=True)
-class OutputForLine:
-    lineno: int
-    text: str
-
-
-# An intermediate data structure in which the Assignments and Output are still separate
-UnpackedHistory: TypeAlias = Iterable[
-    tuple[int, Line | Call | Return | Raise] | AssignmentsForLine | OutputForLine
-]
-
-
 @dataclass
 class Activation:
     function_name: str
@@ -353,7 +335,7 @@ class Activation:
     last_line_no: int
 
 
-def _trace_to_unpacked_history(trace: Trace) -> UnpackedHistory:
+def _trace_to_unpacked_history(trace: Trace) -> Generator[HistoryItem]:
     """Simulate the state of global and local symbols in order to reconstruct
     a history of assignments.
 
@@ -381,7 +363,7 @@ def _trace_to_unpacked_history(trace: Trace) -> UnpackedHistory:
                 activation = activations[-1]
                 a = _compute_assignments(activation, globs, locs)
                 if a:
-                    yield AssignmentsForLine(activation.last_line_no, a)
+                    yield activation.last_line_no, LineEffects(a, None)
 
                 yield lineno, Line()
                 current_globals = globs
@@ -392,7 +374,7 @@ def _trace_to_unpacked_history(trace: Trace) -> UnpackedHistory:
                 activation = activations[-1]
                 a = _compute_assignments(activation, globs, locs)
                 if a:
-                    yield AssignmentsForLine(activation.last_line_no, a)
+                    yield activation.last_line_no, LineEffects(a, None)
 
                 current_globals = globs
                 yield lineno, Return(return_value)
@@ -402,53 +384,43 @@ def _trace_to_unpacked_history(trace: Trace) -> UnpackedHistory:
                 activation = activations[-1]
                 a = _compute_assignments(activation, globs, locs)
                 if a:
-                    yield AssignmentsForLine(activation.last_line_no, a)
+                    yield activation.last_line_no, LineEffects(a, None)
 
                 current_globals = globs
                 yield lineno, Raise(_exception, value, traceback)
 
             case TOutput(text):
                 activation = activations[-1]
-                yield OutputForLine(activation.last_line_no, text)
+                yield activation.last_line_no, LineEffects({}, text)
 
 
-def _merge_effects(unpacked: UnpackedHistory) -> History:
-    """Merge outputs and assignments into LineEffect objects.
+def _pack_effects(unpacked: Generator[HistoryItem]) -> Generator[HistoryItem]:
+    """Merge consecutive LineEffects together."""
+    for (lineno, is_effects), group in groupby(
+        unpacked, key=lambda x: (x[0], isinstance(x[1], LineEffects))
+    ):
+        if is_effects:
+            assignments: Assignments = {}
+            outputs: list[str] = []
 
-    This is not a generator because we mutate things after we yield them,
-    we don't want anyone to be sensitive to that."""
-    history: History = []
-    target: LineEffects | None = None
+            for _, line_effects in group:
+                assert isinstance(line_effects, LineEffects)  # for mypy
+                assignments |= line_effects.assignments
+                if line_effects.output is not None:
+                    outputs.append(line_effects.output)
 
-    for x in unpacked:
-        match x:
-            case AssignmentsForLine(target_lineno, assignments):
-                if target:
-                    target.assignments = assignments
-                else:
-                    target = LineEffects(assignments, None)
-                    history.append((target_lineno, target))
-
-            case OutputForLine(target_lineno, text):
-                if target:
-                    target.output = text
-                else:
-                    target = LineEffects({}, text)
-                    history.append((target_lineno, target))
-
-            case lineno, item:
-                target = None
-                history.append((lineno, item))
-
-    return history
+            yield lineno, LineEffects(assignments, "".join(outputs) or None)
+        else:
+            yield from group
 
 
 def _filter_artifacts(history: History) -> History:
-    """History contains extra implementation artifacts:
+    """Remove implementation artifacts from History:
     - It always contains an extra return at the end that's not part of our program.
       We get rid of that
     - Depending on how the trace was captured it sometimes starts with a call into the
-      module with lineno 0. We get rid of that as well."""
+      module with lineno 0. We get rid of that as well.
+    """
 
     if len(history) < 2:
         return history
@@ -461,9 +433,10 @@ def _filter_artifacts(history: History) -> History:
 
 
 def trace_to_history(trace: Trace) -> History:
+    """Build a History by interpreting the trace."""
     unpacked = _trace_to_unpacked_history(trace)
-    merged = _merge_effects(unpacked)
-    return _filter_artifacts(merged)
+    packed = _pack_effects(unpacked)
+    return _filter_artifacts(list(packed))
 
 
 ###############################################################################
@@ -472,13 +445,18 @@ def trace_to_history(trace: Trace) -> History:
 
 
 def trace_code(source: str, done_callback: DoneCallback) -> None:
-    """
-    Given the source of a python program, returns its trace.
+    """Generates a trace from Python source code.
 
-    We need the callback architecture because some snippets may raise exceptions
-    or otherwise be interrupted. In that case:
-    - The callback will first always be called
-    - Any exception will be raised after that
+    The callback architecture ensures that the trace is captured even if the
+    snippet raises an exception or is interrupted. The callback is
+    guaranteed to execute before any exceptions are re-raised.
+
+    Args:
+        source (str): The Python source code to be executed.
+        callback (callable): A function to handle the trace data.
+
+    Returns:
+        list: A list of trace events captured during execution.
     """
     compiled = compile(source=source, filename="", mode="exec")
 
