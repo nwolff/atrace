@@ -4,7 +4,7 @@ Displays the trace of a given python program.
 
 import argparse
 
-from rich.console import Console
+from atrace.tool_support import terminal_or_svg
 
 from . import Trace, trace_code, trace_to_history
 from .reporter import history_to_table
@@ -15,6 +15,10 @@ def run():
         description="Displays the trace table of the given program"
     )
     parser.add_argument("program", help="The path to a python file")
+    parser.add_argument(
+        "--svg",
+        help="The path to save the trace as an SVG file instead of displaying it",
+    )
     options = parser.parse_args()
 
     with open(options.program) as content_file:
@@ -22,10 +26,12 @@ def run():
 
     def on_trace(trace: Trace) -> None:
         history = trace_to_history(trace)
-        console = Console()
-        console.print()
-        console.print(history_to_table(history))
-        console.print()
+        table = history_to_table(history)
+
+        with terminal_or_svg(options.svg) as console:
+            console.print()
+            console.print(table)
+            console.print()
 
     trace_code(source, on_trace)
 

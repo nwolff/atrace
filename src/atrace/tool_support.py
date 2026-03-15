@@ -1,3 +1,5 @@
+import contextlib
+import io
 import time
 from collections.abc import Callable
 from typing import TypeAlias
@@ -14,6 +16,33 @@ NumberedLines: TypeAlias = list[tuple[int, str]]
 
 def add_line_numbers(source: str) -> NumberedLines:
     return [(i + 1, line) for i, line in enumerate(source.splitlines())]
+
+
+@contextlib.contextmanager
+def terminal_or_svg(svg_path: str | None):
+    """Provides a Rich Console context that either prints to the terminal
+    or captures output to an SVG file.
+
+    If svg_path is provided, stdout is redirected to an internal buffer,
+    recording the output and saving it as an SVG upon exiting the context.
+    If svg_path is None, it yields a standard live-printing Console.
+
+    Args:
+        svg_path (str | None): The file path to save the SVG. If None,
+                               output defaults to the standard terminal.
+
+    Yields:
+        rich.console.Console: A console instance configured for the chosen mode.
+    """
+    if svg_path is not None:
+        # Create a console that records but doesn't print to the terminal
+        # We use a dummy file (io.StringIO) to suppress stdout
+        capture_console = Console(record=True, file=io.StringIO(), width=120)
+        yield capture_console
+        capture_console.save_svg(svg_path, title="Python Trace")
+        print(f"Successfully saved trace to {svg_path}")
+    else:
+        yield Console()
 
 
 # Scrolling support

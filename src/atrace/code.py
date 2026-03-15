@@ -4,18 +4,22 @@ Displays a numbered and syntax highlighted representation of a given program
 
 import argparse
 
-from rich.console import Console
 from rich.syntax import Syntax
 from rich.table import Table
 
 from . import History, Trace, trace_code, trace_to_history
-from .tool_support import NumberedLines, add_line_numbers, visible_program_lines
+from .tool_support import (
+    NumberedLines,
+    add_line_numbers,
+    terminal_or_svg,
+    visible_program_lines,
+)
 
 INTENSE_COLOR = 0, 0, 255
 
 TAIL_SIZE = 3
 
-CODE_VIEW_WIDTH = 86
+CODE_VIEW_WIDTH = 80
 
 
 def clamp(a, lower_bound, higher_bound):
@@ -68,6 +72,10 @@ def run():
         description="Displays the code of the given program."
     )
     parser.add_argument("program", help="The path to a python file")
+    parser.add_argument(
+        "--svg",
+        help="The path to save the code as an SVG file instead of displaying it",
+    )
     options = parser.parse_args()
 
     with open(options.program) as content_file:
@@ -76,10 +84,11 @@ def run():
     def on_trace(trace: Trace) -> None:
         history = trace_to_history(trace)
         numbered_lines = add_line_numbers(source)
-        console = Console()
-        console.print()
-        console.print(generate_code_display(numbered_lines, history))
-        console.print()
+        table = generate_code_display(numbered_lines, history)
+        with terminal_or_svg(options.svg) as console:
+            console.print()
+            console.print(table)
+            console.print()
 
     trace_code(source, on_trace)
 
