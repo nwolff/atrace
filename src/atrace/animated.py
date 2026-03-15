@@ -5,44 +5,31 @@ Displays the animated trace of a given python program.
 import argparse
 
 from rich.console import Console
-from rich.padding import Padding
 from rich.table import Table
 
-from . import History, Trace, trace_code, trace_to_history
+from . import Trace, trace_code, trace_to_history
 from .code import CODE_VIEW_WIDTH, generate_code_display
 from .reporter import (
     history_to_table_data,
     table_data_to_table,
 )
-from .tool_support import NumberedLines, add_line_numbers, animate
+from .tool_support import Context, add_line_numbers, animate
 
 
 def max_visible_rows():
     return Console().size.height - 7  # Reserve space for headers/borders
 
 
-def generate_code_and_trace_display(
-    numbered_lines: NumberedLines, history: History, current_lineno: int | None = None
-):
-    grid = Table.grid(padding=(0, 0))
-    grid.add_column(
-        width=CODE_VIEW_WIDTH,
-    )
+def generate_code_and_trace_display(context: Context) -> Table:
+    grid = Table.grid(padding=(1, 0))
+    grid.add_column(width=CODE_VIEW_WIDTH)
     grid.add_column()
-
-    grid.add_row(
-        generate_code_display(numbered_lines, history, current_lineno),
-        generate_trace_display(numbered_lines, history, current_lineno),
-    )
-    # (top, right, bottom, left)
-    padded_grid = Padding(grid, (1, 0, 1, 0))
-
-    return padded_grid
+    grid.add_row(generate_code_display(context), generate_trace_display(context))
+    return grid
 
 
-def generate_trace_display(
-    _numbered_lines: NumberedLines, history: History, _current_lineno: int | None = None
-) -> Table:
+def generate_trace_display(context: Context) -> Table:
+    _, history, _ = context
     headers, rows = history_to_table_data(history)
 
     # Only display the rows we have room for, this has the effect of scrolling the rows

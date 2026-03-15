@@ -56,21 +56,33 @@ at the end of the execution.
 You can display the trace and other visualizations for existing programs (no
 need to `import atrace` in the program).
 
+Note: If you are using `uv` replace the `python3` at the beginning with `uv run`
+
 To display the trace:
 
     python3 -m atrace examples/fizzbuzz.py
+
+To save the trace to an svg file:
+
+    python3 -m atrace examples/fizzbuzz.py --svg local/fizzbuzz.svg
 
 To display a line-by-line animation of the trace:
 
     python3 -m atrace.animated examples/fibonacci.py
 
 To display a histogram of how many times each line in a program is executed:
+(svg output works the same as for the trace)
 
     python3 -m atrace.histogram examples/nested_loops.py
 
 To display a line-by-line animation of the histogram:
 
     python3 -m atrace.animated_histogram examples/fizzbuzz.py 
+
+To display the syntax-highlited, numbered code of the program:
+(svg output also works here)
+
+    python3 -m atrace.code examples/fizzbuzz.py 
 
 ## Compatibility
 

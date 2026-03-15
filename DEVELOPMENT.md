@@ -1,10 +1,3 @@
-# Ideas
-
-- Fix jitter when scrolling (for instance in kitchen_sink.py). I've read about this
-  in video game camera techniques.
-- Speed control / Manual nav / Automaticaly determine the best animation duration.
-- Capture the output/animation with Ascii-cinema, moviepy, or console.save_svg.
-
 # Development
 
 We use uv for development.

@@ -7,9 +7,9 @@ import argparse
 from rich.syntax import Syntax
 from rich.table import Table
 
-from . import History, Trace, trace_code, trace_to_history
+from . import Trace, trace_code, trace_to_history
 from .tool_support import (
-    NumberedLines,
+    Context,
     add_line_numbers,
     terminal_or_svg,
     visible_program_lines,
@@ -32,10 +32,8 @@ def color_for_intensity(intensity: float) -> str:
     return f"rgb({color[0]},{color[1]},{color[2]})"
 
 
-def generate_code_display(
-    numbered_lines: NumberedLines, history: History, current_lineno: int | None = None
-) -> Table:
-
+def generate_code_display(context: Context) -> Table:
+    numbered_lines, history, current_lineno = context
     if current_lineno:
         recent_history = history[-TAIL_SIZE:]
         num_items = len(recent_history)
@@ -61,7 +59,6 @@ def generate_code_display(
             background_color=tail.get(lineno),
             highlight_lines={lineno} if lineno == current_lineno else None,
         )
-
         table.add_row(syntax_line)
 
     return table
@@ -84,7 +81,7 @@ def run():
     def on_trace(trace: Trace) -> None:
         history = trace_to_history(trace)
         numbered_lines = add_line_numbers(source)
-        table = generate_code_display(numbered_lines, history)
+        table = generate_code_display(Context(numbered_lines, history))
         with terminal_or_svg(options.svg) as console:
             console.print()
             console.print(table)

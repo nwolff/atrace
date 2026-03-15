@@ -10,6 +10,7 @@ from collections import Counter
 from typing import TypeAlias
 
 from rich import box
+from rich.console import RenderableType
 from rich.padding import Padding
 from rich.table import Table
 from rich.text import Text
@@ -17,11 +18,14 @@ from rich.text import Text
 from . import Call, History, Line, Trace, trace_code, trace_to_history
 from .code import (
     CODE_VIEW_WIDTH,
-    NumberedLines,
     add_line_numbers,
     generate_code_display,
 )
-from .tool_support import terminal_or_svg, visible_program_lines
+from .tool_support import (
+    Context,
+    terminal_or_svg,
+    visible_program_lines,
+)
 
 BAR_COLOR = "rgb(0,0,255)"
 
@@ -44,9 +48,8 @@ def line_histogram(history: History) -> ExecutionsPerLine:
     return Counter(lineno for lineno, _ in history)
 
 
-def generate_histogram_display(
-    numbered_lines: NumberedLines, history: History, current_lineno: int | None = None
-) -> Table:
+def generate_histogram_display(context: Context) -> Table:
+    numbered_lines, history, current_lineno = context
     executions_per_line = line_histogram(history)
     max_hits = max(executions_per_line.values()) if executions_per_line else 1
 
@@ -76,9 +79,7 @@ def generate_histogram_display(
     return table
 
 
-def generate_code_and_histogram_display(
-    numbered_lines: NumberedLines, history: History, current_lineno: int | None = None
-):
+def generate_code_and_histogram_display(context: Context) -> RenderableType:
     grid = Table(
         show_header=False,
         show_edge=False,
@@ -92,8 +93,8 @@ def generate_code_and_histogram_display(
     grid.add_column(no_wrap=True)
 
     grid.add_row(
-        generate_code_display(numbered_lines, history, current_lineno),
-        generate_histogram_display(numbered_lines, history, current_lineno),
+        generate_code_display(context),
+        generate_histogram_display(context),
     )
 
     # Pad so that there are empty lines at the top and bottom
@@ -108,7 +109,7 @@ def run():
     parser.add_argument("program", help="The path to a python file")
     parser.add_argument(
         "--svg",
-        help="The path to save the code as an SVG file instead of displaying it",
+        help="The path to save the histogram as an SVG file instead of displaying it",
     )
     options = parser.parse_args()
 
@@ -118,7 +119,7 @@ def run():
     def on_trace(trace: Trace) -> None:
         numbered_lines = add_line_numbers(source)
         history = filter_events(trace_to_history(trace))
-        display = generate_code_and_histogram_display(numbered_lines, history)
+        display = generate_code_and_histogram_display(Context(numbered_lines, history))
         with terminal_or_svg(options.svg) as console:
             console.print(display)
 

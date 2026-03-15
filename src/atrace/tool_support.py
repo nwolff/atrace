@@ -1,8 +1,8 @@
 import contextlib
 import io
 import time
-from collections.abc import Callable
-from typing import TypeAlias
+from collections.abc import Callable, Iterator
+from typing import NamedTuple, TypeAlias
 
 from rich.console import Console, RenderableType
 from rich.live import Live
@@ -10,7 +10,6 @@ from rich.live import Live
 from . import History
 
 # The extra information we display is always tied to line numbers.
-
 NumberedLines: TypeAlias = list[tuple[int, str]]
 
 
@@ -19,7 +18,7 @@ def add_line_numbers(source: str) -> NumberedLines:
 
 
 @contextlib.contextmanager
-def terminal_or_svg(svg_path: str | None):
+def terminal_or_svg(svg_path: str | None) -> Iterator[Console]:
     """Provides a Rich Console context that either prints to the terminal
     or captures output to an SVG file.
 
@@ -65,9 +64,14 @@ def visible_program_lines(
 
 ANIMATION_SECONDS = 5
 
-GenerateDisplay: TypeAlias = Callable[
-    [NumberedLines, History, int | None], RenderableType
-]
+
+class Context(NamedTuple):
+    numbered_lines: NumberedLines
+    history: History
+    current_lineno: int | None = None
+
+
+GenerateDisplay: TypeAlias = Callable[[Context], RenderableType]
 
 
 def animate(
@@ -79,11 +83,15 @@ def animate(
             history_up_to_now = history[: index + 1]
             current_lineno, _ = history[index]
             live.update(
-                generate_display(numbered_lines, history_up_to_now, current_lineno),
+                generate_display(
+                    Context(numbered_lines, history_up_to_now, current_lineno)
+                ),
                 refresh=True,
             )
             time.sleep(ANIMATION_SECONDS / len(history))
+
+        # Final frame without any line highlighted
         live.update(
-            generate_display(numbered_lines, history, None),
+            generate_display(Context(numbered_lines, history_up_to_now)),
             refresh=True,
         )
