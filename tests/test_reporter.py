@@ -106,7 +106,7 @@ class TestReporter(unittest.TestCase):
         self.assertEqual(expected_table_data, history_to_table_data(history))
 
     def test_procedure(self):
-        """A function that takes and returns nothing"""
+        """A function that takes and returns nothing."""
         history: History = [
             (1, Line()),
             # We need to pass a callable, otherwise it gets displayed

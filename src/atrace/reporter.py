@@ -83,35 +83,27 @@ def _human_double_quote(data):
     return re.sub(pattern, '"', text)
 
 
-def remove_functions(assignments: Assignments) -> Assignments:
+def _remove_functions(assignments: Assignments) -> Assignments:
     """Remove variables that contain functions in the given assignments."""
     return {var: val for var, val in assignments.items() if not callable(val)}
 
 
 def _filter_functions_in_assignments(history: History) -> History:
-    """Remove variables that contain functions from all assignments in History."""
+    """Remove variables that contain functions from assignments and calls.
+
+    If after filtering there are no effects left, remove that LineEffects entirely.
+    """
     result: History = []
     for lineno, item in history:
         match item:
             case Call(function_name, bindings):
-                result.append((lineno, Call(function_name, remove_functions(bindings))))
-            case LineEffects(assignments, output):
                 result.append(
-                    (lineno, LineEffects(remove_functions(assignments), output))
+                    (lineno, Call(function_name, _remove_functions(bindings)))
                 )
-            case _:
-                result.append((lineno, item))
-    return result
-
-
-def _filter_no_effect(history: History) -> History:
-    """Remove history items that neither assign nor output."""
-    result: History = []
-    for lineno, item in history:
-        match item:
             case LineEffects(assignments, output):
-                if assignments or output:
-                    result.append((lineno, item))
+                assignments = _remove_functions(assignments)
+                if assignments or output is not None:
+                    result.append((lineno, LineEffects(assignments, output)))
             case _:
                 result.append((lineno, item))
     return result
@@ -169,11 +161,11 @@ ITS_A_CALL = object()
 
 
 def history_to_table_data(history: History) -> TableData:
-    """Build an intermediate representation of the trace table where all the data
-    has been generated and is properly represented as strings"""
+    """Build an intermediate representation of the trace table.
 
+    All the headers and rows are complete.
+    """
     history = _filter_functions_in_assignments(history)
-    history = _filter_no_effect(history)
 
     all_vars_or_funcs, history_has_exception, history_has_output = _prepare(history)
 

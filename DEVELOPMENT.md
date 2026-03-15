@@ -1,14 +1,10 @@
 # Ideas
 
-- Let the user unhide functions
-
-# Ideas for animations
-
-- Fix jitter when scrolling (for instance in kitchen_sink.py)
-  I've read about this in video game camera techniques.
-- Speed control / Manual nav / Automaticaly determine the best animation duration
-- Capture the animation with Ascii-cinema / moviepy / console.save_svg. Maybe just
-  document that.
+- Fix jitter when scrolling (for instance in kitchen_sink.py). I've read about this
+  in video game camera techniques.
+- Speed control / Manual nav / Automaticaly determine the best animation duration.
+- Capture the output/animation with Ascii-cinema / moviepy / console.save_svg.
+  Maybe just document how to do that.
 
 # Development
 
