@@ -17,11 +17,11 @@ from atrace import (
 
 
 class TestFunctions(unittest.TestCase):
-    def callback_done(self, trace):
+    def on_trace(self, trace):
         self.trace = trace
 
     def test_procedure(self):
-        trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.on_trace)
         from .snippets import procedure  # noqa
 
         expected_trace = [
@@ -48,7 +48,7 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_function(self):
-        trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.on_trace)
         from .snippets import function  # noqa
 
         expected_trace = [
@@ -78,7 +78,7 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_assign_before_call(self):
-        trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.on_trace)
         from .snippets import function_assign_before_call  # noqa
 
         expected_trace = [
@@ -107,7 +107,7 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_print_before_call(self):
-        trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.on_trace)
         from .snippets import function_print_before_call  # noqa
 
         expected_trace = [
@@ -137,7 +137,7 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_function_modifying_global(self):
-        trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.on_trace)
         from .snippets import function_modifying_global  # noqa
 
         expected_trace = [
@@ -169,7 +169,7 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_function_shadowing_global(self):
-        trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.on_trace)
         from .snippets import function_shadowing_global  # noqa
 
         expected_trace = [
@@ -201,7 +201,7 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_recursion(self):
-        trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.on_trace)
         from .snippets import function_with_recursion  # noqa
 
         expected_trace = [
@@ -242,7 +242,7 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_nested_functions(self):
-        trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.on_trace)
         from .snippets import function_nested  # noqa
 
         expected_trace = [
@@ -293,7 +293,7 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_function_in_variable(self):
-        trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.on_trace)
         from .snippets import function_in_variable  # noqa
 
         expected_trace = [
@@ -326,7 +326,7 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_lambda(self):
-        trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.on_trace)
         from .snippets import function_lambda  # noqa
 
         expected_trace = [
@@ -353,7 +353,7 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_generator(self):
-        trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.on_trace)
         from .snippets import function_generator  # noqa
 
         expected_trace = [

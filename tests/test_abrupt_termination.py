@@ -18,11 +18,11 @@ from atrace import (
 
 
 class TestAbruptTermination(unittest.TestCase):
-    def callback_done(self, trace):
+    def on_trace(self, trace):
         self.trace = trace
 
     def test_syntax_error(self):
-        trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.on_trace)
 
         with self.assertRaises(Exception):
             from .snippets import syntax_error  # noqa
@@ -48,7 +48,7 @@ class TestAbruptTermination(unittest.TestCase):
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_uncaught_exception(self):
-        trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.on_trace)
 
         with self.assertRaises(Exception):
             from .snippets import uncaught_exception  # noqa
@@ -84,7 +84,7 @@ class TestAbruptTermination(unittest.TestCase):
         self.assertEqual(expected_history, trace_to_history(self.trace))
 
     def test_caught_exception(self):
-        trace_next_loaded_module(self.callback_done)
+        trace_next_loaded_module(self.on_trace)
 
         from .snippets import caught_exception  # noqa
 
