@@ -11,7 +11,7 @@ kids = ["riri", "fifi", "loulou"]
 while kids:
     print(kids.pop(0))
 
-lst = [x**2 for x in range(4)]
+lst = [x**2 for x in range(3)]
 
 add = lambda x, y: x + y  # noqa
 print(add(5, 3))

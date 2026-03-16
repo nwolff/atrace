@@ -1,9 +1,11 @@
 import copy
 import inspect
+import os
 import sys
 from collections.abc import Callable, Generator
 from dataclasses import dataclass
 from itertools import groupby
+from pprint import pprint
 from types import FrameType, ModuleType, TracebackType
 from typing import Any, NamedTuple, TextIO, TypeAlias
 
@@ -23,13 +25,51 @@ except ImportError:
     # Fallback for local development if _version.py hasn't been generated yet
     __version__ = "0.0.0.dev0"
 
-"""
+
+###############################################################################
+# DEBUG support
+###############################################################################
+
+
+# Set `DEBUG` in the environment to enable debug logs (extremely verbose)
+DEBUG = "DEBUG" in os.environ
+
+
+def debug_heading(heading):
+    """Output a highlighted diagnostic text to stderr if DEBUG is enabled."""
+    debug(f"\n\033[93m[{heading.upper()}]\033[0m")
+
+
+def debug(*args, **kwargs):
+    """Output a formatted diagnostic message to stderr if DEBUG is enabled."""
+    if DEBUG:
+        print(*args, file=sys.stderr, **kwargs)
+
+
+def debug_frame(frame):
+    """Log a scrubbed frame dump to stderr if DEBUG is enabled."""
+    if not DEBUG:
+        return
+
+    attrs = ("f_back", "f_code", "f_lasti", "f_lineno", "f_trace", "f_trace_lines")
+    frame_info = {a: getattr(frame, a) for a in attrs if hasattr(frame, a)}
+
+    debug(f"<frame at {id(frame):#x}>: ")
+    pprint(frame_info, stream=sys.stderr)
+
+
+def debug_stack_frame():
+    """Log the current stack frame to stderr if DEBUG is enabled."""
+    if not DEBUG:
+        return
+    debug("stack frame:")
+    pprint(inspect.stack(), stream=sys.stderr)
+
+
 ###############################################################################
 # TRACING
 ###############################################################################
-
-The models and classes that collect the trace.
-"""
+""" The models and classes that collect the trace. """
 
 Symbols: TypeAlias = dict[str, Any]
 
@@ -156,7 +196,7 @@ class OutputLogger:
         self.stdout.flush()
 
 
-CONAME = "<module>"
+BOUNDARY_CONAMES = ("<module>", "<string>")
 
 
 class Tracer:
@@ -175,22 +215,55 @@ class Tracer:
 
     def trace_vars(self, frame: FrameType, event: str, arg: Any):
         if self.filename_of_interest is None:
-            if frame.f_code.co_name == CONAME:
+            debug_heading("LOOKING FOR START")
+            debug_frame(frame)
+            if frame.f_code.co_name in BOUNDARY_CONAMES:
                 # We were lurking until now, finding out when to start collecting info.
                 # It's time to get to work.
                 self.filename_of_interest = frame.f_code.co_filename
+                debug_heading("START")
+                debug(f"because co_name {frame.f_code.co_name} in {BOUNDARY_CONAMES}")
+                debug(f"filename of interest: {self.filename_of_interest}")
+                debug(f"event: {event}")
+                debug_frame(frame)
+
                 sys.stdout = OutputLogger(trace=self.trace, stdout=self.original_stdout)
             else:
                 return None
 
         # We don't want to step out of the file we are tracing
         if frame.f_code.co_filename != self.filename_of_interest:
+            debug_heading("ignoring")
+            debug(
+                f"because file {frame.f_code.co_filename} != "
+                f"f{self.filename_of_interest}",
+            )
+            debug(f"event: {event}")
+            debug_frame(frame)  # This used to break thonny
             return None
 
         # Some very dynamic environment (such as Thonny) start loading proxies
         # and stuff during our module execution. Don't trace those.
         if ignore_function(frame.f_code.co_name):
+            debug_heading("ignoring")
+            debug(f"because of function name: {frame.f_code.co_name}")
+            debug(f"event: {event}")
+            debug_frame(frame)
             return None
+
+        # Don't show atrace internals
+        """"
+        if frame.f_back and frame.f_back.f_code.co_filename == __file__:
+            debug_heading("ignoring")
+            debug("because frame.f_back is atrace.__init__:")
+            debug(f"event: {event}")
+            dump_frame(frame)
+            return None
+
+        debug_heading("tracing")
+        debug(f"event: {event}")
+        dump_frame(frame)
+        """
 
         globs = copy_carefully(filtered_variables(frame.f_globals))
         locs = (
@@ -224,11 +297,21 @@ class Tracer:
             self.trace.append((frame.f_lineno, trace_event))
 
         # Detect if we are leaving the module we wanted to trace.
+        # XXX: Should unload even if we never found the filename_of_interest,
+        # maybe the stragegy is simply counting calls and returns ?
         if (
             event == "return"
+            and frame.f_code.co_name in BOUNDARY_CONAMES
             and frame.f_code.co_filename == self.filename_of_interest
-            and frame.f_code.co_name == CONAME
         ):  # Unload if the job is done.
+            debug_heading("Unloading")
+            debug(
+                "because: event is return",
+                f"and co_name {frame.f_code.co_name} in {BOUNDARY_CONAMES}",
+                f"and filename matches {self.filename_of_interest}",
+            )
+
+            debug_frame(frame)
             self.unload()
             return None
 
@@ -242,11 +325,10 @@ class Tracer:
         self.done_callback(self.trace)
 
 
-"""
 ###############################################################################
 # INTERPRETING THE TRACE
 ###############################################################################
-
+"""
 Takes a raw trace to make sense of it:
     - Assigns variable assignments and outputs to the line where they occurred
     - Coalesces effects that happen on the same line together
@@ -465,23 +547,30 @@ def _get_importer_frame() -> FrameType | None:
     return None
 
 
-# Import only here, to avoid circular import problems
-from .reporter import print_history  # noqa: E402
+# Set `STORE_TRACE` in the environment to store the trace instead of dumping it
+STORE_TRACE = "STORE_TRACE" in os.environ
+
+_trace = None
 
 
-def _dump_report(trace: Trace):
-    history = trace_to_history(trace)
-    print_history(history)
+def on_trace(trace: Trace):
+    if STORE_TRACE:
+        _trace = trace
+    else:
+        from .reporter import print_history  # noqa: E402
+
+        history = trace_to_history(trace)
+        print_history(history)
 
 
-if "unittest" not in sys.modules:
+if STORE_TRACE or "unittest" not in sys.modules:
+    debug_heading("INIT")
+    debug("atrace module being imported")
+    debug_stack_frame()
     # We want to only trace the module that imports us
-    importer_frame = _get_importer_frame()
     # Luckily, when run as a tool with -m no importer frame gets found
+    importer_frame = _get_importer_frame()
     if importer_frame:
-        # When running in thonny we need to step up one level because
-        # we get imported from a backend custom_import.
-        # We got this extra step even when not in thonny, there is no negative impact.
-        if importer_frame.f_back:
-            importer_frame = importer_frame.f_back
-        Tracer(_dump_report, importer_frame)
+        debug_heading("ATTACH TO FRAME")
+        debug_frame(importer_frame)
+        Tracer(on_trace, importer_frame)
