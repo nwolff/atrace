@@ -9,7 +9,7 @@ from typing import Any, NamedTuple, TypeAlias
 from rich import box, get_console
 from rich.table import Table
 
-from . import (
+from .interpreter import (
     UNASSIGN,
     Assignments,
     Call,

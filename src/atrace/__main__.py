@@ -6,7 +6,8 @@ import argparse
 
 from atrace.tool_support import terminal_or_svg
 
-from . import Trace, trace_code, trace_to_history
+from . import Trace, trace_code
+from .interpreter import trace_to_history
 from .reporter import history_to_table
 
 

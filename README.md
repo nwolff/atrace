@@ -79,7 +79,7 @@ To display a line-by-line animation of the histogram:
 
     python3 -m atrace.animated_histogram examples/fizzbuzz.py 
 
-To display the syntax-highlited, numbered code of the program:
+To display the program with line numbers and syntax highlighting:
 (svg output also works here)
 
     python3 -m atrace.code examples/fizzbuzz.py 
@@ -92,7 +92,7 @@ Tested with:
 
 - cpython
 - pypy
-- Thonny
+- Thonny (with the cpython backend)
 
 ## Does not work well with
 

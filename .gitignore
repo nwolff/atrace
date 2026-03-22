@@ -19,7 +19,7 @@ wheels/
 .vscode
 .idea
 
-# Automatically generated version file
+# Automatically generated version file
 src/atrace/_version.py
 
 # Coverage.py

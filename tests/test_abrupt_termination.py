@@ -2,17 +2,19 @@ import unittest
 from unittest import mock
 
 from atrace import (
-    UNASSIGN,
-    Line,
-    LineEffects,
-    Raise,
     TCall,
     TException,
     TLine,
     TOutput,
     TReturn,
-    Var,
     trace_next_loaded_module,
+)
+from atrace.interpreter import (
+    UNASSIGN,
+    Line,
+    LineEffects,
+    Raise,
+    Var,
     trace_to_history,
 )
 

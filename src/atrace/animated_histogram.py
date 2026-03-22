@@ -6,8 +6,9 @@ Displays an animation of a given program, with :
 
 import argparse
 
-from . import Trace, trace_code, trace_to_history
+from . import Trace, trace_code
 from .histogram import filter_events, generate_code_and_histogram_display
+from .interpreter import trace_to_history
 from .tool_support import add_line_numbers, animate
 
 

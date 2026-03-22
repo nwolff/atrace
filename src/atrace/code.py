@@ -7,7 +7,8 @@ import argparse
 from rich.syntax import Syntax
 from rich.table import Table
 
-from . import Trace, trace_code, trace_to_history
+from . import Trace, trace_code
+from .interpreter import trace_to_history
 from .tool_support import (
     Context,
     add_line_numbers,

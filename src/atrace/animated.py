@@ -7,8 +7,9 @@ import argparse
 from rich.console import Console
 from rich.table import Table
 
-from . import Trace, trace_code, trace_to_history
+from . import Trace, trace_code
 from .code import CODE_VIEW_WIDTH, generate_code_display
+from .interpreter import trace_to_history
 from .reporter import (
     history_to_table_data,
     table_data_to_table,

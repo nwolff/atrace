@@ -7,7 +7,7 @@ from typing import NamedTuple, TypeAlias
 from rich.console import Console, RenderableType
 from rich.live import Live
 
-from . import History
+from .interpreter import History
 
 # The extra information we display is always tied to line numbers.
 NumberedLines: TypeAlias = list[tuple[int, str]]

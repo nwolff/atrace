@@ -2,16 +2,18 @@ import unittest
 from unittest.mock import patch
 
 from atrace import (
-    UNASSIGN,
-    History,
-    Line,
-    LineEffects,
     TCall,
     TLine,
     TOutput,
     TReturn,
-    Var,
     trace_next_loaded_module,
+)
+from atrace.interpreter import (
+    UNASSIGN,
+    History,
+    Line,
+    LineEffects,
+    Var,
     trace_to_history,
 )
 

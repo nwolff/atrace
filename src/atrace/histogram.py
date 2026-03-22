@@ -15,12 +15,15 @@ from rich.padding import Padding
 from rich.table import Table
 from rich.text import Text
 
-from . import Call, History, Line, Trace, trace_code, trace_to_history
+from atrace.interpreter import Call, History, Line
+
+from . import Trace, trace_code
 from .code import (
     CODE_VIEW_WIDTH,
     add_line_numbers,
     generate_code_display,
 )
+from .interpreter import trace_to_history
 from .tool_support import (
     Context,
     terminal_or_svg,

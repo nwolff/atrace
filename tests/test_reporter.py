@@ -5,7 +5,16 @@ from unittest import mock
 from rich.console import Console
 from rich.table import Table
 
-from atrace import UNASSIGN, Call, History, Line, LineEffects, Raise, Return, Var
+from atrace.interpreter import (
+    UNASSIGN,
+    Call,
+    History,
+    Line,
+    LineEffects,
+    Raise,
+    Return,
+    Var,
+)
 from atrace.reporter import LeftAligned, history_to_table, history_to_table_data
 
 
