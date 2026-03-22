@@ -228,6 +228,7 @@ class Tracer:
         self, done_callback: DoneCallback, attached_to_frame: FrameType | None
     ):
         debug_heading("TRACER __INIT__")
+        debug("param attached_to_frame:", attached_to_frame)
         debug_stack_frame()
 
         self.stats = Stats()
@@ -333,6 +334,15 @@ class Tracer:
         if (
             self.target_codeobj
             and self.target_codeobj.co_filename != frame.f_code.co_filename
+        ):
+            return False
+
+        # If we're running from instrumented code, then we ignore frames that were
+        # created by __init__.py
+        if (
+            self.attached_to_frame
+            and frame.f_back
+            and frame.f_back.f_code.co_filename == __file__
         ):
             return False
 
