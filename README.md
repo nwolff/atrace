@@ -66,6 +66,10 @@ To save the trace to an svg file:
 
     python3 -m atrace examples/fizzbuzz.py --svg local/fizzbuzz.svg
 
+To display the trace as typst markup:
+
+    python3 -m atrace.typst examples/fizzbuzz.py 
+
 To display a line-by-line animation of the trace:
 
     python3 -m atrace.animated examples/fibonacci.py
