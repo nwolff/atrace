@@ -28,5 +28,3 @@ Then:
 - Tried rich.save_svg, it generates a long strip of console output instead of an
   animation
 - Tried termtosvg, it's easy to use but give glitchy output
-- asciinema is cool
-- Capture the animation with Ascii-cinema / moviepy

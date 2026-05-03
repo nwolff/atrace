@@ -24,9 +24,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 requires-python = ">=3.10"
-dependencies = [
-    "rich>=14.3.3",
-]
+dependencies = ["rich>=15.0.0"]
 
 [project.urls]
 Homepage = "https://github.com/nwolff/atrace.git"
@@ -36,8 +34,8 @@ dev = [
     "asciinema>=2.4.0",
     "babel>=2.18.0",
     "coverage>=7.13.5",
-    "mypy>=1.19.1",
-    "ruff>=0.15.6",
+    "mypy>=1.20.2",
+    "ruff>=0.15.12",
 ]
 
 [build-system]
